@@ -36,6 +36,110 @@ module.exports = class extends Base {
     }
 
   }
+  async allAction() {
+    const page = this.get('page') || 1;
+    const size = this.get('size') || 10;
+    const orderSn = this.get('orderSn') || '';
+    const consignee = this.get('consignee') || '';
+    const status = this.get('status') || '';
+    const type = this.get('type') || '';
+    // const user = this.get('user') || '';
+    const limit_day_start = this.get('limit_day_start') || 0
+    const limit_day_end = this.get('limit_day_end') || 0
+    console.log(limit_day_start,limit_day_end);
+    const model = this.model('order');
+    if (status == '' && parseInt(limit_day_start) !== 0 && parseInt(limit_day_end) !== 0 ) {
+      console.log('所有订单 限制时间');
+        const data = await model.where({
+         order_sn: ['like', `%${orderSn}%`],
+         consignee: ['like', `%${consignee}%`],
+         pay_id: ['like', `%${type}%`],
+         add_time: ['between', limit_day_start, limit_day_end ]
+       }).order(['id DESC']).page(page, size).countSelect();
+        const newList = [];
+        for (const item of data.data) {
+          item.order_status_text = await this.model('order').getOrderStatusText(item.id);
+          // item.locgic = await this.model('order_express').where({order_id:item.id}).find()
+          item.refund = await this.model('order_refund').where({order_sn:item.order_sn}).find()
+          item.user = await this.model('user').where({id:item.user_id}).find()
+          item.province_name = await this.model('region').where({ id: item.province }).getField('name', true);
+          item.city_name = await this.model('region').where({ id: item.city }).getField('name', true);
+          item.district_name = await this.model('region').where({ id: item.district }).getField('name', true);
+          item.full_region = item.province_name + item.city_name + item.district_name + item.address;
+          newList.push(item);
+        }
+        data.data = newList;
+        return this.success(data);
+      }else if(status == '' && parseInt(limit_day_start) == 0 && parseInt(limit_day_end) == 0){
+        console.log('所有订单 不限制时间');
+        const data = await model.where({
+          pay_id: ['like', `%${type}%`],
+          order_sn: ['like', `%${orderSn}%`],
+          consignee: ['like', `%${consignee}%`]
+        }).order(['id DESC']).page(page, size).countSelect();
+        const newList = [];
+        for (const item of data.data) {
+          item.order_status_text = await this.model('order').getOrderStatusText(item.id);
+          // item.locgic = await this.model('order_express').where({order_id:item.id}).find()
+          item.refund = await this.model('order_refund').where({order_sn:item.order_sn}).find()
+          item.user = await this.model('user').where({id:item.user_id}).find()
+          item.province_name = await this.model('region').where({ id: item.province }).getField('name', true);
+          item.city_name = await this.model('region').where({ id: item.city }).getField('name', true);
+          item.district_name = await this.model('region').where({ id: item.district }).getField('name', true);
+          item.full_region = item.province_name + item.city_name + item.district_name + item.address;
+          newList.push(item);
+        }
+        data.data = newList;
+        return this.success(data);
+      }else if (status !== '' && parseInt(limit_day_start) !== 0 && parseInt(limit_day_end) !== 0) {
+        console.log('限制订单 限制时间');
+        const data = await model.where({
+          order_status:status,
+          order_sn: ['like', `%${orderSn}%`],
+          pay_id: ['like', `%${type}%`],
+          consignee: ['like', `%${consignee}%`],
+          add_time: ['between', limit_day_start, limit_day_end]
+       }).order(['id DESC']).page(page, size).countSelect();
+        const newList = [];
+        for (const item of data.data) {
+          item.order_status_text = await this.model('order').getOrderStatusText(item.id);
+          item.order_status_text = await this.model('order').getOrderStatusText(item.id);
+          // item.locgic = await this.model('order_express').where({order_id:item.id}).find()
+          item.refund = await this.model('order_refund').where({order_sn:item.order_sn}).find()
+          item.user = await this.model('user').where({id:item.user_id}).find()
+          item.province_name = await this.model('region').where({ id: item.province }).getField('name', true);
+          item.city_name = await this.model('region').where({ id: item.city }).getField('name', true);
+          item.district_name = await this.model('region').where({ id: item.district }).getField('name', true);
+          item.full_region = item.province_name + item.city_name + item.district_name + item.address;
+          newList.push(item);
+        }
+        data.data = newList;
+        return this.success(data);
+      }else if(status !== '' && parseInt(limit_day_start) == 0 && parseInt(limit_day_end) == 0){
+        console.log('限制订单 不限制时间');
+        const data = await model.where({
+          order_status:status,
+          order_sn: ['like', `%${orderSn}%`],
+          pay_id: ['like', `%${type}%`],
+          consignee: ['like', `%${consignee}%`]
+        }).order(['id DESC']).page(page, size).countSelect();
+        const newList = [];
+        for (const item of data.data) {
+          item.order_status_text = await this.model('order').getOrderStatusText(item.id);
+          item.order_status_text = await this.model('order').getOrderStatusText(item.id);
+          // item.locgic = await this.model('order_express').where({order_id:item.id}).find()
+          item.refund = await this.model('order_refund').where({order_sn:item.order_sn}).find()
+          item.user = await this.model('user').where({id:item.user_id}).find()
+          item.province_name = await this.model('region').where({ id: item.province }).getField('name', true);
+          item.city_name = await this.model('region').where({ id: item.city }).getField('name', true);
+          item.district_name = await this.model('region').where({ id: item.district }).getField('name', true);
+          item.full_region = item.province_name + item.city_name + item.district_name + item.address;
+          newList.push(item);
+        }
+        data.data = newList;
+        return this.success(data);
+    }
+  }
   async pendoutorderAction() {
     const page = this.post('page') || 1;
     const size = this.post('size') || 10;
@@ -60,7 +164,7 @@ module.exports = class extends Base {
     const consignee = this.post('consignee') || '';
 
     const model = this.model('order');
-    const data = await model.where({order_status:0, order_sn: ['like', `%${orderSn}%`], consignee: ['like', `%${consignee}%`]}).order(['id DESC']).page(page, size).countSelect();
+    const data = await model.where({is_del:0,order_status:0, order_sn: ['like', `%${orderSn}%`], consignee: ['like', `%${consignee}%`]}).order(['id DESC']).page(page, size).countSelect();
     const newList = [];
     for (const item of data.data) {
       item.order_status_text = await this.model('order').getOrderStatusText(item.id);
@@ -318,6 +422,7 @@ module.exports = class extends Base {
       refund_is_success:1,
       refund_time: new Date().getTime(),
 
+
     })
   }
   async storeAction() {
@@ -357,6 +462,10 @@ module.exports = class extends Base {
     // console.log(orderid);
     const orderinfo = await this.model('order').where({id:orderid}).find()
     const refundorderinfo = await this.model('order_refund').where({order_sn:orderinfo.order_sn}).find()
+    await this.model('order').where({id:orderid}).update({
+      order_status: refundorderinfo.back_state,
+      refund_is_success: 2,
+    })
     const data = await this.model('order_refund').where({order_sn:orderinfo.order_sn}).update({
       state:1017,
       state_text:'已拒绝',
@@ -365,5 +474,18 @@ module.exports = class extends Base {
     })
     console.log(orderid,orderinfo,refundorderinfo);
     return this.success(data)
+  }
+  /**
+   * 查询
+   * @returns {Promise.<void>}
+   */
+  async expressAction() {
+    const orderId = this.post('orderId');
+    console.log(orderId);
+    if (think.isEmpty(orderId)) {
+      return this.fail('订单不存在');
+    }
+    const latestExpressInfo = await this.model('order_express').getLatestOrderExpress(orderId);
+    return this.success(latestExpressInfo);
   }
 };

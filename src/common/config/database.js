@@ -5,9 +5,9 @@ module.exports = {
   database: 'bbgshop',
   prefix: 'bbgshop_',
   encoding: 'utf8mb4',
-  host: '127.0.0.1',
-  port: '3306',
-  user: 'root',
-  password: 'root',
+  host: '',
+  port: '',
+  user: '',
+  password: '',
   dateStrings: true
 };

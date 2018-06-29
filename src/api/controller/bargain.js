@@ -63,7 +63,13 @@ module.exports = class extends Base {
     })
   }
 
-
+    async bargainouttimeAction() {
+      const barinfo = this.post('barinfo')
+      const data = await this.model("bargain_user").where({id:barinfo.id}).update({
+        is_outtime:1
+      })
+      return this.success(data)
+    }
     // //好友砍价
     async friendcutAction() {
       const userInfo = this.post('userInfo')
@@ -209,252 +215,252 @@ module.exports = class extends Base {
       })
     }
 
-// //查找砍价列表
-async findcutlistAction() {
-  const userInfo = this.post('userInfo')
-  const bargoods = this.post('bargoods')
-  // console.log(openid);
-  // const data = await this.model('bargain_user').where({ user_id:think.userId}).select();
-  // const data = await this.model('bargain_user_friend').where({ bargain_id:bargain_id,friend_openid:openid}).select();
-  const data = await this.model('bargain_user_friend').where({
-    bargain_id:bargoods.bargain_id,
-    bargain_main_userid:userInfo.id,
-    // friend_openid:openidInfo.sessionData.openid,
-    goods_skuid:bargoods.goods_sku_id }).select();
+    // //查找砍价列表
+    async findcutlistAction() {
+      const userInfo = this.post('userInfo')
+      const bargoods = this.post('bargoods')
+      // console.log(openid);
+      // const data = await this.model('bargain_user').where({ user_id:think.userId}).select();
+      // const data = await this.model('bargain_user_friend').where({ bargain_id:bargain_id,friend_openid:openid}).select();
+      const data = await this.model('bargain_user_friend').where({
+        bargain_id:bargoods.bargain_id,
+        bargain_main_userid:userInfo.id,
+        // friend_openid:openidInfo.sessionData.openid,
+        goods_skuid:bargoods.goods_sku_id }).select();
 
-  return this.success({
-    data:data
-  })
-}
-// //查找openid是否砍过价格
-async iscutAction() {
-  const openidInfo = this.post('userInfo_in')
-  const userInfo = this.post('userInfo')
-  const bargoods = this.post('bargoods')
-  // console.log(openid);
-  // const data = await this.model('bargain_user').where({ user_id:think.userId}).select();
-  // const data = await this.model('bargain_user_friend').where({ bargain_id:bargain_id,friend_openid:openid}).select();
-  const data = await this.model('bargain_user_friend').where({
-    bargain_id:bargoods.bargain_id,
-    bargain_main_userid:userInfo.id,
-    friend_openid:openidInfo.sessionData.openid,
-    goods_skuid:bargoods.goods_sku_id }).select();
-
-  return this.success({
-    data:data
-  })
-}
-//砍价
-async cutAction() {
-  const openidInfo = this.post('openidInfo')
-  const bargoods = this.post('barGoods')
-  const goodssku = this.post('goodsSku')
-  console.log(openidInfo);
-  console.log(bargoods);
-  console.log(goodssku);
-
-  // const data = await this.model('bargain_user').where({ user_id:think.userId}).select();
-  const data = await this.model('bargain_user_friend').where({ bargain_id:bargoods.id,friend_openid:openidInfo.sessionData.openid,goods_skuid:goodssku.id}).select();
-  console.log(data);
-  if ( data.length == 0 && openidInfo.sessionData.user_id == think.userId) {  //刚发起就砍一刀
-    const changebar = await this.model('bargain').where({ goodsid:bargoods.goodsid }).find()
-    await this.model('bargain').where({ goodsid:bargoods.goodsid }).update({
-      launched_num:Number(changebar.launched_num) + 1
-    })
-    let cutprice = 0
-    let surplus = 0
-    // cutprice = goodssku.retail_price * 0.15
-    let rend = (parseInt(100*Math.random()) / 1000).toFixed(3);
-    console.log(0.08 + Number(rend));
-    cutprice = (goodssku.retail_price * (0.08 + Number(rend))).toFixed(2)
-    surplus = ((goodssku.retail_price - cutprice) / 1).toFixed(2)
-    console.log(bargoods.least_cut_num);
-    console.log(goodssku.retail_price);
-    console.log(cutprice);
-    console.log(surplus);
-    console.log("999999999999999999999999999999999999");
-    await this.model('bargain_user_friend').add({
-      bargain_user_id: think.userId,
-      bargain_main_userid: openidInfo.sessionData.user_id,
-      friend_openid: openidInfo.sessionData.openid,
-      friend_nick_name: openidInfo.userInfo.nickname,
-      friend_avatar: openidInfo.userInfo.avatar,
-      bargain_id: bargoods.id,
-      goods_id: bargoods.goodsid,
-      goods_name: bargoods.goods_name,
-      goods_skuid: goodssku.id,
-      goods_rel_price: goodssku.retail_price,
-      cut_price: cutprice,
-      surplus_price: surplus,
-      goods_lowest_price: bargoods.lowest_price,
-
-    })
-    // console.log("999999999999999999999999999999999999");
-    const userdata = await this.model('bargain_user').where({
-      goods_sku_id:goodssku.id
-    }).find()
-    let cut_num = userdata.have_cut_num
-    let cut_price = userdata.have_cut_price
-    let cut_lest = userdata.have_cut_lest
-    await this.model('bargain_user').where({
-      goods_sku_id:goodssku.id
-    }).update({
-      have_cut_num:cut_num+1,
-      have_cut_price:(Number(cut_price) + Number(cutprice)).toFixed(2),
-      have_cut_lest: (Number(cut_lest) + Number(surplus)).toFixed(2),
-
-    })
-    // console.log("98774651321357891657");
-  }else {
-
-  }
-  // return this.success({
-  //   data:data
-  // })
-}
-  //按id查找砍价信息
-  async userbargainlistAction() {
-    const data = await this.model('bargain_user').where({ user_id:think.userId }).select();
-    let boedel = []
-    for (var i = 0; i < data.length; i++) {
-      // array[i]
-      // console.log(data[i]);
-      if (data[i].iscut == '5') { }else {
-        boedel.push(data[i])
-      }
-    }
-    return this.success({
-      data:boedel
-    })
-  }
-  //按id查找砍价信息cutagain
-  async cutagainAction() {
-    const bargoods = this.post('bargoods')
-    console.log(bargoods);
-    const data = await this.model('bargain_user').where({ goods_sku_id:bargoods.goods_sku_id}).find();
-    const barlist = await this.model('bargain_user_friend').where({ goods_skuid:bargoods.goods_sku_id,bargain_id:bargoods.bargain_id}).select();
-    // console.log(data);
-    if (data.iscut == 1) {
-      return this.fail(1,'已砍价完成')
-    }else if (data.iscut == 0){
       return this.success({
-        data:data,
-        barlist:barlist.reverse()
+        data:data
+      })
+    }
+    // //查找openid是否砍过价格
+    async iscutAction() {
+      const openidInfo = this.post('userInfo_in')
+      const userInfo = this.post('userInfo')
+      const bargoods = this.post('bargoods')
+      // console.log(openid);
+      // const data = await this.model('bargain_user').where({ user_id:think.userId}).select();
+      // const data = await this.model('bargain_user_friend').where({ bargain_id:bargain_id,friend_openid:openid}).select();
+      const data = await this.model('bargain_user_friend').where({
+        bargain_id:bargoods.bargain_id,
+        bargain_main_userid:userInfo.id,
+        friend_openid:openidInfo.sessionData.openid,
+        goods_skuid:bargoods.goods_sku_id }).select();
+
+      return this.success({
+        data:data
+      })
+    }
+    //砍价
+    async cutAction() {
+      const openidInfo = this.post('openidInfo')
+      const bargoods = this.post('barGoods')
+      const goodssku = this.post('goodsSku')
+      console.log(openidInfo);
+      console.log(bargoods);
+      console.log(goodssku);
+
+      // const data = await this.model('bargain_user').where({ user_id:think.userId}).select();
+      const data = await this.model('bargain_user_friend').where({ bargain_id:bargoods.id,friend_openid:openidInfo.sessionData.openid,goods_skuid:goodssku.id}).select();
+      console.log(data);
+      if ( data.length == 0 && openidInfo.sessionData.user_id == think.userId) {  //刚发起就砍一刀
+        const changebar = await this.model('bargain').where({ goodsid:bargoods.goodsid }).find()
+        await this.model('bargain').where({ goodsid:bargoods.goodsid }).update({
+          launched_num:Number(changebar.launched_num) + 1
+        })
+        let cutprice = 0
+        let surplus = 0
+        // cutprice = goodssku.retail_price * 0.15
+        let rend = (parseInt(100*Math.random()) / 1000).toFixed(3);
+        console.log(0.08 + Number(rend));
+        cutprice = (goodssku.retail_price * (0.08 + Number(rend))).toFixed(2)
+        surplus = ((goodssku.retail_price - cutprice) / 1).toFixed(2)
+        console.log(bargoods.least_cut_num);
+        console.log(goodssku.retail_price);
+        console.log(cutprice);
+        console.log(surplus);
+        console.log("999999999999999999999999999999999999");
+        await this.model('bargain_user_friend').add({
+          bargain_user_id: think.userId,
+          bargain_main_userid: openidInfo.sessionData.user_id,
+          friend_openid: openidInfo.sessionData.openid,
+          friend_nick_name: openidInfo.userInfo.nickname,
+          friend_avatar: openidInfo.userInfo.avatar,
+          bargain_id: bargoods.id,
+          goods_id: bargoods.goodsid,
+          goods_name: bargoods.goods_name,
+          goods_skuid: goodssku.id,
+          goods_rel_price: goodssku.retail_price,
+          cut_price: cutprice,
+          surplus_price: surplus,
+          goods_lowest_price: bargoods.lowest_price,
+
+        })
+        // console.log("999999999999999999999999999999999999");
+        const userdata = await this.model('bargain_user').where({
+          goods_sku_id:goodssku.id
+        }).find()
+        let cut_num = userdata.have_cut_num
+        let cut_price = userdata.have_cut_price
+        let cut_lest = userdata.have_cut_lest
+        await this.model('bargain_user').where({
+          goods_sku_id:goodssku.id
+        }).update({
+          have_cut_num:cut_num+1,
+          have_cut_price:(Number(cut_price) + Number(cutprice)).toFixed(2),
+          have_cut_lest: (Number(cut_lest) + Number(surplus)).toFixed(2),
+
+        })
+        // console.log("98774651321357891657");
+      }else {
+
+      }
+      // return this.success({
+      //   data:data
+      // })
+    }
+    //按id查找砍价信息
+    async userbargainlistAction() {
+      const data = await this.model('bargain_user').where({ user_id:think.userId }).select();
+      let boedel = []
+      for (var i = 0; i < data.length; i++) {
+        // array[i]
+        // console.log(data[i]);
+        if (data[i].iscut == '5') { }else {
+          boedel.push(data[i])
+        }
+      }
+      return this.success({
+        data:boedel
+      })
+    }
+    //按id查找砍价信息cutagain
+    async cutagainAction() {
+      const bargoods = this.post('bargoods')
+      console.log(bargoods);
+      const data = await this.model('bargain_user').where({ goods_sku_id:bargoods.goods_sku_id}).find();
+      const barlist = await this.model('bargain_user_friend').where({ goods_skuid:bargoods.goods_sku_id,bargain_id:bargoods.bargain_id}).select();
+      // console.log(data);
+      if (data.iscut == 1) {
+        return this.fail(1,'已砍价完成')
+      }else if (data.iscut == 0){
+        return this.success({
+          data:data,
+          barlist:barlist.reverse()
+        })
+
+      }
+
+    }
+    //按id查找砍价信息cutagain
+    async barsetorderAction() {
+      const _ = require('lodash');
+      const addressInfo = this.post('addressInfo')
+      const bargaingoods = this.post('bargaingoods')
+      const userInfo = this.post('userInfo')
+      console.log(addressInfo);
+      console.log(bargaingoods);
+      console.log(userInfo);
+
+      const date = new Date();
+      let sn = date.getFullYear() + _.padStart(date.getMonth()+1, 2, '0') + _.padStart(date.getDate(), 2, '0')
+      + _.padStart(date.getHours(), 2, '0') + _.padStart(date.getMinutes(), 2, '0')
+      + _.padStart(date.getSeconds(), 2, '0') +  _.random(100000, 999999);
+      console.log(sn);
+      var tmp = Date.parse( new Date() ).toString();
+      tmp = tmp.substr(0,10);
+
+      const barmain = await this.model("bargain").where({
+        goodsid:bargaingoods.goods_id,
+      }).find()
+      await this.model('bargain_user').where({
+        goods_sku_id:bargaingoods.goods_sku_id,
+      }).update({ iscut: '2',order_sn:sn })
+      await this.model("bargain").where({
+        goodsid:bargaingoods.goods_id,
+      }).update({
+        purchased_num:parseInt(barmain.purchased_num) + 1
+      })
+
+      // let sn = new Data().getTime()
+
+      const order = await this.model('order').add({
+        order_sn:sn,
+        user_id:bargaingoods.user_id,
+        order_status: 0 ,
+        consignee:addressInfo.name,
+        country:addressInfo.country_id,
+        province:addressInfo.province_id,
+        city:addressInfo.city_id,
+        district:addressInfo.district_id,
+        address:addressInfo.address,
+        mobile:addressInfo.mobile,
+        postscript:'',
+        shipping_fee: bargaingoods.have_cut_price,
+        pay_name:'砍价订单',
+        pay_id: 1 ,
+        actual_price: bargaingoods.goods_lowest_price,
+        order_price: bargaingoods.goods_lowest_price,
+        goods_price: bargaingoods.goods_rel_price,
+        add_time: tmp,
+        goods_sku_id: bargaingoods.goods_sku_id
+        // confirm_time: 0 ,
+      })
+      console.log(order);
+      const order_goods = await this.model("order_goods").add({
+        order_id: parseInt(order),
+        goods_id: bargaingoods.goods_id,
+        goods_sn: bargaingoods.goods_sn,
+        product_id: bargaingoods.goods_sku_id,
+        goods_name: bargaingoods.goods_name,
+        list_pic_url: bargaingoods.goods_pic,
+        market_price: bargaingoods.goods_rel_price,
+        retail_price: bargaingoods.goods_rel_price,
+        number: 1,
+        goods_specifition_name_value: bargaingoods.goods_sku_value,
+        goods_specifition_ids: bargaingoods.goods_spec_ids
+      })
+
+      return this.success({
+        orderId:sn,
+        orderPrice:bargaingoods.goods_lowest_price
       })
 
     }
+    //按id查找用户已发起的砍价信息
+    async finduserbargainAction() {
+      const bargainid = this.get("bargainid")
+      // console.log(bargainid);
+      let id = parseInt(bargainid)
+      // console.log(id);
+      const bargainuser = await this.model('bargain_user').where({id:id}).find();
+      // bargainuser.
+      const goods = await this.model('goods').where({ id:bargainuser.goods_id }).find();
+      const user = await this.model('user').where({ id:think.userId }).find();
+      console.log(goods.category_id);
+      const othergoods = await this.model('goods').where({ category_id:goods.category_id }).limit(6).select();
+      // let goods = []
+      // for (var i = 0; i < array.length; i++) {
+      //   array[i]
+      // }
+      // for (var i = 0; i < data.length; i++) {
+      //   // array[i]
+      //   let goodsdata = []
+      const bargainmain = await this.model('bargain').where({ id:bargainuser.bargain_id }).find();
+      //   // console.log(i);
+      //   data[i].goods = goodsdata
+      // }
+      return this.success({
+        bargainuser:bargainuser,
+        bargainmain:bargainmain,
+        goods:goods,
+        user:user,
+        othergoods:othergoods
+        // Result:result,
+        // abc:"123"
+      })
+    }
 
-  }
-  //按id查找砍价信息cutagain
-  async barsetorderAction() {
-    const _ = require('lodash');
-    const addressInfo = this.post('addressInfo')
-    const bargaingoods = this.post('bargaingoods')
-    const userInfo = this.post('userInfo')
-    console.log(addressInfo);
-    console.log(bargaingoods);
-    console.log(userInfo);
-
-    const date = new Date();
-    let sn = date.getFullYear() + _.padStart(date.getMonth()+1, 2, '0') + _.padStart(date.getDate(), 2, '0')
-    + _.padStart(date.getHours(), 2, '0') + _.padStart(date.getMinutes(), 2, '0')
-    + _.padStart(date.getSeconds(), 2, '0') +  _.random(100000, 999999);
-    console.log(sn);
-    var tmp = Date.parse( new Date() ).toString();
-    tmp = tmp.substr(0,10);
-
-    const barmain = await this.model("bargain").where({
-      goodsid:bargaingoods.goods_id,
-    }).find()
-    await this.model('bargain_user').where({
-      goods_sku_id:bargaingoods.goods_sku_id,
-    }).update({ iscut: '2',order_sn:sn })
-    await this.model("bargain").where({
-      goodsid:bargaingoods.goods_id,
-    }).update({
-      purchased_num:parseInt(barmain.purchased_num) + 1
-    })
-
-    // let sn = new Data().getTime()
-
-    const order = await this.model('order').add({
-      order_sn:sn,
-      user_id:bargaingoods.user_id,
-      order_status: 0 ,
-      consignee:addressInfo.name,
-      country:addressInfo.country_id,
-      province:addressInfo.province_id,
-      city:addressInfo.city_id,
-      district:addressInfo.district_id,
-      address:addressInfo.address,
-      mobile:addressInfo.mobile,
-      postscript:'',
-      shipping_fee: bargaingoods.have_cut_price,
-      pay_name:'砍价订单',
-      pay_id: 1 ,
-      actual_price: bargaingoods.goods_lowest_price,
-      order_price: bargaingoods.goods_lowest_price,
-      goods_price: bargaingoods.goods_rel_price,
-      add_time: tmp,
-      goods_sku_id: bargaingoods.goods_sku_id
-      // confirm_time: 0 ,
-    })
-    console.log(order);
-    const order_goods = await this.model("order_goods").add({
-      order_id: parseInt(order),
-      goods_id: bargaingoods.goods_id,
-      goods_sn: bargaingoods.goods_sn,
-      product_id: bargaingoods.goods_sku_id,
-      goods_name: bargaingoods.goods_name,
-      list_pic_url: bargaingoods.goods_pic,
-      market_price: bargaingoods.goods_rel_price,
-      retail_price: bargaingoods.goods_rel_price,
-      number: 1,
-      goods_specifition_name_value: bargaingoods.goods_sku_value,
-      goods_specifition_ids: bargaingoods.goods_spec_ids
-    })
-
-    return this.success({
-      orderId:sn,
-      orderPrice:bargaingoods.goods_lowest_price
-    })
-
-  }
-  //按id查找用户已发起的砍价信息
-  async finduserbargainAction() {
-    const bargainid = this.get("bargainid")
-    // console.log(bargainid);
-    let id = parseInt(bargainid)
-    // console.log(id);
-    const bargainuser = await this.model('bargain_user').where({id:id}).find();
-    // bargainuser.
-    const goods = await this.model('goods').where({ id:bargainuser.goods_id }).find();
-    const user = await this.model('user').where({ id:think.userId }).find();
-    console.log(goods.category_id);
-    const othergoods = await this.model('goods').where({ category_id:goods.category_id }).limit(6).select();
-    // let goods = []
-    // for (var i = 0; i < array.length; i++) {
-    //   array[i]
-    // }
-    // for (var i = 0; i < data.length; i++) {
-    //   // array[i]
-    //   let goodsdata = []
-    const bargainmain = await this.model('bargain').where({ id:bargainuser.bargain_id }).find();
-    //   // console.log(i);
-    //   data[i].goods = goodsdata
-    // }
-    return this.success({
-      bargainuser:bargainuser,
-      bargainmain:bargainmain,
-      goods:goods,
-      user:user,
-      othergoods:othergoods
-      // Result:result,
-      // abc:"123"
-    })
-  }
-
-  //查找sku的价格
+    //查找sku的价格
     async findvaluepriceAction() {
       const data = this.post('data')
       // console.log(data);
@@ -465,7 +471,7 @@ async cutAction() {
     }
 
     //设置用户砍价
-      async setuserbargainAction() {
+    async setuserbargainAction() {
         const bargoods = this.post('bargoods')
         const skuid = this.post('skuid')
         const skuvalue = this.post('skuvalue')
@@ -519,7 +525,7 @@ async cutAction() {
             least_cut_num:bargoods.least_cut_num,
             only_cut_num:bargoods.only_cut_num,
             created_time:new Date().getTime(),
-            end_time:new Date().getTime() + parseInt(bargoods.user_duration_time),
+            end_time:new Date().getTime() + Number(bargoods.user_duration_time),
             goods_sku_id:skuid.id,
             goods_spec_ids:skuid.goods_specification_ids,
             goods_sku_value:skuvalue,
@@ -537,8 +543,8 @@ async cutAction() {
 
       }
 
-  //按商品sku信息
-  async findgoodskuAction() {
+      //按商品sku信息
+    async findgoodskuAction() {
     const goodsId = this.get("id")
     const model = this.model('goods');
 

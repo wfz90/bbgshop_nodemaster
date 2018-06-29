@@ -77,6 +77,168 @@ module.exports = class extends think.Service {
     });
   }
 
+
+  /**
+   * 查询企业打款_银行
+   * @param payInfo
+   * @returns {Promise}
+   */
+  async queryBankPay(payInfo) {
+    console.log("进入admin的queryBankPay事件");
+    console.log(payInfo);
+    const weixinpay = new WeiXinPay({
+      partner_key: think.config('weixin.partner_key'), // 秘钥
+      mch_id: think.config('weixin.mch_id'),
+    });
+    return new Promise((resolve, reject) => {
+      weixinpay.query_BankPay({
+        partner_trade_no: payInfo.partner_trade_no,
+        // mch_id: think.config('weixin.mch_id'),
+      }, (res) => {
+        console.log(res);
+          if (res.return_code === 'SUCCESS' && res.result_code === 'SUCCESS') {
+            const returnParams = {
+              'status': res.status,
+              'return_code': res.return_code,
+              'result_code': res.result_code,
+              'err_code_des': res.err_code_des,
+              'pay_succ_time': res.pay_succ_time,
+              'partner_trade_no': res.partner_trade_no,
+              'cmms_amt': res.cmms_amt,
+              'amount': res.amount,
+              'create_time': res.create_time,
+              'reason':res.reason
+            };
+            resolve(returnParams);
+          } else {
+            reject(res);
+          }
+      });
+    });
+
+  }
+
+
+  /**
+   * 企业打款_银行——rsa公钥
+   * @param payInfo
+   * @returns {Promise}
+   */
+  async createEnterprisePay_BankCard(payInfo) {
+    console.log("进入admin的createEnterprisePay_BankCard事件");
+    // console.log(payInfo);
+    const weixinpay = new WeiXinPay({
+      partner_key: think.config('weixin.partner_key') // 秘钥
+    });
+    return new Promise((resolve, reject) => {
+      weixinpay.getrsaCodePay_BankCard({
+        mch_id: think.config('weixin.mch_id'),
+      }, (res) => {
+        console.log(res);
+          if (res.return_code === 'SUCCESS' && res.result_code === 'SUCCESS') {
+            const returnParams = {
+              'return_key': res.pub_key,
+            };
+            resolve(returnParams);
+          } else {
+            reject(res);
+          }
+          })
+      });
+    // });
+
+  }
+  /**
+   * 企业打款_银行
+   * @param payInfo
+   * @returns {Promise}
+   */
+  async bankpay(payInfo) {
+    // console.log(payInfo,bank_code,true_name);
+    const weixinpay = new WeiXinPay({
+      enc_bank_no_ras: payInfo.enc_bank_no,
+      enc_true_name_ras: payInfo.enc_true_name,
+      partner_key: think.config('weixin.partner_key') // 秘钥
+    });
+    return new Promise((resolve, reject) => {
+      weixinpay.createEnterprisePay_BankCard({
+        mch_id: think.config('weixin.mch_id'),
+        partner_trade_no: payInfo.partner_trade_no,
+        bank_code: payInfo.bank_code,
+        amount: payInfo.amount
+      }, (res) => {
+        console.log(res);
+        if (res.return_code === 'SUCCESS' && res.result_code === 'SUCCESS') {
+          const returnParams = {
+            'return_code': res.return_code,
+            'result_code': res.result_code,
+            'return_msg': res.return_msg,
+            'partner_trade_no': res.partner_trade_no,
+            'amount': res.amount,
+            'payment_no': res.payment_no,
+            'cmms_amt':  res.cmms_amt,
+            'err_code_des':  res.err_code_des
+          };
+          resolve(returnParams);
+        } else {
+          reject(res);
+        }
+      });
+    });
+  }
+  /**
+   * 企业打款_零钱
+   * @param payInfo
+   * @returns {Promise}
+   */
+
+  async createEnterprisePay(payInfo) {
+    console.log("进入admin的createEnterprisePay事件");
+    // console.log(payInfo);
+    const disInfo = await think.model('distribution_cash_order').where({
+      partner_trade_no:payInfo.out_trade_no
+    }).find()
+    console.log(disInfo);
+    const weixinpay = new WeiXinPay({
+      // mch_appid: disInfo.mch_appid, // 微信小程序appid
+      // mchid: disInfo.mchid,
+      // partner_trade_no: disInfo.partner_trade_no,
+      // openid: disInfo.openid,
+      // amount: disInfo.amount,
+      // spbill_create_ip: disInfo.spbill_create_ip,
+      // check_name: disInfo.check_name,
+      // desc: disInfo.desc,
+    });
+    return new Promise((resolve, reject) => {
+      weixinpay.createEnterprisePay({
+        mch_appid: disInfo.mch_appid, // 微信小程序appid
+        mchid: disInfo.mchid,
+        partner_trade_no: disInfo.partner_trade_no,
+        openid: disInfo.openid,
+        amount: disInfo.amount,
+        spbill_create_ip: disInfo.spbill_create_ip,
+        check_name: disInfo.check_name,
+        desc: disInfo.desc,
+      }, (res) => {
+        console.log(res);
+        // if (res.return_code === 'SUCCESS' && res.result_code === 'SUCCESS') {
+        //   const returnParams = {
+        //     'appid': res.appid,
+        //     'timeStamp': parseInt(Date.now() / 1000) + '',
+        //     'nonceStr': res.nonce_str,
+        //     'package': 'prepay_id=' + res.prepay_id,
+        //     'signType': 'MD5'
+        //   };
+        //   const paramStr = `appId=${returnParams.appid}&nonceStr=${returnParams.nonceStr}&package=${returnParams.package}&signType=${returnParams.signType}&timeStamp=${returnParams.timeStamp}&key=` + think.config('weixin.partner_key');
+        //   returnParams.paySign = md5(paramStr).toUpperCase();
+        //   resolve(returnParams);
+        // } else {
+        //   reject(res);
+        // }
+      });
+    });
+  }
+
   /**
    * 退款
    * @param payInfo
@@ -92,34 +254,91 @@ module.exports = class extends think.Service {
       partner_key: think.config('weixin.partner_key') // 秘钥
     });
     console.log(payInfo);
-    console.log(weixinpay);
-    const refundInfo = await think.model('order_refund').where({order_sn:payInfo.out_trade_no}).find()
-    console.log(refundInfo);
-    // console.log("已获取退款详情");
-    return new Promise((resolve, reject) => {
-      weixinpay.createRefundOrder({
-        out_trade_no: payInfo.out_trade_no,
-        out_refund_no: refundInfo.refund_sn,
-        total_fee: payInfo.total_fee,
-        refund_fee: parseInt(refundInfo.refund_price * 100),
-        notify_url: think.config('weixin.notify_url'),
-      }, (res) => {
-        if (res.return_code === 'SUCCESS' && res.result_code === 'SUCCESS') {
-          const returnParams = {
-            'appid': res.appid,
-            'timeStamp': parseInt(Date.now() / 1000) + '',
-            'nonceStr': res.nonce_str,
-            'package': 'prepay_id=' + res.prepay_id,
-            'signType': 'MD5'
-          };
-          const paramStr = `appId=${returnParams.appid}&nonceStr=${returnParams.nonceStr}&package=${returnParams.package}&signType=${returnParams.signType}&timeStamp=${returnParams.timeStamp}&key=` + think.config('weixin.partner_key');
-          returnParams.paySign = md5(paramStr).toUpperCase();
-          resolve(returnParams);
-        } else {
-          reject(res);
-        }
+    // console.log("98798798798789");
+    if (payInfo.pay_id == 2) {
+      // refundInfo.out_refund_no = "拼团退款:"+payInfo.out_trade_no
+      // refundInfo.refund_fee = payInfo.actual_price
+      return new Promise((resolve, reject) => {
+        weixinpay.createRefundOrder({
+          out_trade_no: payInfo.out_trade_no,
+          out_refund_no: "Collagerefund_"+payInfo.out_trade_no,
+          total_fee: parseInt(payInfo.actual_price * 100),
+          refund_fee: parseInt(payInfo.actual_price * 100),
+          notify_url: think.config('weixin.notify_url'),
+        }, (res) => {
+          console.log(res)
+          if (res.return_code === 'SUCCESS' && res.result_code === 'SUCCESS') {
+            const returnParams = {
+              'appid': res.appid,
+              'timeStamp': parseInt(Date.now() / 1000) + '',
+              'nonceStr': res.nonce_str,
+              'package': 'prepay_id=' + res.prepay_id,
+              'signType': 'MD5'
+            };
+            const paramStr = `appId=${returnParams.appid}&nonceStr=${returnParams.nonceStr}&package=${returnParams.package}&signType=${returnParams.signType}&timeStamp=${returnParams.timeStamp}&key=` + think.config('weixin.partner_key');
+            returnParams.paySign = md5(paramStr).toUpperCase();
+            resolve(returnParams);
+          } else {
+            reject(res);
+          }
+        });
       });
-    });
+    }else {
+      console.log(weixinpay);
+      const refundInfo = await think.model('order_refund').where({order_sn:payInfo.out_trade_no}).find()
+      console.log(refundInfo);
+      return new Promise((resolve, reject) => {
+        weixinpay.createRefundOrder({
+          out_trade_no: payInfo.out_trade_no,
+          out_refund_no: refundInfo.refund_sn,
+          total_fee: payInfo.total_fee,
+          refund_fee: parseInt(refundInfo.refund_price * 100),
+          notify_url: think.config('weixin.notify_url'),
+        }, (res) => {
+          if (res.return_code === 'SUCCESS' && res.result_code === 'SUCCESS') {
+            const returnParams = {
+              'appid': res.appid,
+              'timeStamp': parseInt(Date.now() / 1000) + '',
+              'nonceStr': res.nonce_str,
+              'package': 'prepay_id=' + res.prepay_id,
+              'signType': 'MD5'
+            };
+            const paramStr = `appId=${returnParams.appid}&nonceStr=${returnParams.nonceStr}&package=${returnParams.package}&signType=${returnParams.signType}&timeStamp=${returnParams.timeStamp}&key=` + think.config('weixin.partner_key');
+            returnParams.paySign = md5(paramStr).toUpperCase();
+            resolve(returnParams);
+          } else {
+            reject(res);
+          }
+        });
+      });
+    }
+    // console.log(refundInfo);
+    // console.log("11111111111111111111111111111111111111111111111111");
+    // console.log("已获取退款详情");
+    // return new Promise((resolve, reject) => {
+    //   weixinpay.createRefundOrder({
+    //     out_trade_no: payInfo.out_trade_no,
+    //     out_refund_no: refundInfo.refund_sn,
+    //     total_fee: payInfo.total_fee,
+    //     refund_fee: parseInt(refundInfo.refund_price * 100),
+    //     notify_url: think.config('weixin.notify_url'),
+    //   }, (res) => {
+    //     if (res.return_code === 'SUCCESS' && res.result_code === 'SUCCESS') {
+    //       const returnParams = {
+    //         'appid': res.appid,
+    //         'timeStamp': parseInt(Date.now() / 1000) + '',
+    //         'nonceStr': res.nonce_str,
+    //         'package': 'prepay_id=' + res.prepay_id,
+    //         'signType': 'MD5'
+    //       };
+    //       const paramStr = `appId=${returnParams.appid}&nonceStr=${returnParams.nonceStr}&package=${returnParams.package}&signType=${returnParams.signType}&timeStamp=${returnParams.timeStamp}&key=` + think.config('weixin.partner_key');
+    //       returnParams.paySign = md5(paramStr).toUpperCase();
+    //       resolve(returnParams);
+    //     } else {
+    //       reject(res);
+    //     }
+    //   });
+    // });
   }
   /**
    * 生成排序后的支付参数 query

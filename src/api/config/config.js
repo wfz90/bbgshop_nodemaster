@@ -10,7 +10,8 @@ module.exports = {
     'goods',
     'brand',
     'search',
-    'region'
+    'region',
+    'feedback'
   ],
 
   // 可以公开访问的Action
@@ -24,6 +25,8 @@ module.exports = {
     'cart/update',
     'cart/delete',
     'cart/goodscount',
-    'pay/notify'
+    'pay/notify',
+    'luckdraw/findinfo',
+    'feedback/exchange'
   ]
 };

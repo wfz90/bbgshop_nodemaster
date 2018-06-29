@@ -1,3 +1,5 @@
+// const schedule = require('node-schedule')
+
 module.exports = class extends think.Controller {
   async __before() {
     // 根据token值获取用户id
@@ -11,5 +13,15 @@ module.exports = class extends think.Controller {
         return this.fail(401, '请先登录');
       }
     }
+    // var date = new Date(2018, 6, 4, 15, 31, 0);
+    //
+    // var j = schedule.scheduleJob(date, function(){
+    //  console.log('现在时间：',new Date());
+    // });
+    // var date = new Date(2017, 11, 16, 16, 43, 0);
+    //
+    // var j = schedule.scheduleJob(date, function(){
+    //  console.log('现在时间：',new Date());
+    // });
   }
 };

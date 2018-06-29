@@ -31,7 +31,7 @@ module.exports = class extends Base {
     try {
       const returnParams = await WeixinSerivce.createUnifiedOrder({
         openid: openid,
-        body: 'OrderNumber:' + orderInfo.order_sn,
+        body: '编号:' + orderInfo.order_sn,
         out_trade_no: orderInfo.order_sn,
         total_fee: parseInt(orderInfo.actual_price * 100),
         spbill_create_ip: '',
@@ -117,6 +117,7 @@ module.exports = class extends Base {
   async prepayCollageAction() {
     const orderId = this.get('orderId');
     console.log(orderId);
+    console.log(orderId.length);
     const orderInfo = await this.model('order').where({ id: orderId }).find();
     // console.log("999999999999999999999999999999999");
     if (think.isEmpty(orderInfo)) {
@@ -136,7 +137,7 @@ module.exports = class extends Base {
     try {
       const returnParams = await WeixinSerivce.createUnifiedOrder({
         openid: openid,
-        body: 'OrderNumber:' + orderInfo.order_sn,
+        body: '编号:' + orderInfo.order_sn,
         out_trade_no: orderInfo.order_sn,
         total_fee: parseInt(orderInfo.actual_price * 100),
         spbill_create_ip: '',
@@ -183,7 +184,9 @@ module.exports = class extends Base {
       })
       return this.fail(217,"正常！")
 
-    }else{
+    }else if(ionfo.pay_id == 3){
+      return this.fail(217,"正常！")
+    }else {
       return this.fail(503,"异常！")
     }
 

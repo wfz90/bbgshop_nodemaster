@@ -14,7 +14,7 @@ module.exports = class extends Base {
     const model = this.model('coupon_main');
     const data = await model.where({coupon_name: ['like', `%${couponname}%`]}).order(['id DESC']).page(page, size).countSelect();
     console.log(data);
-    // const newList = [];
+    // const newList = []; 
     // for (const item of data.data) {
     //   item.order_status_text = await this.model('order').getOrderStatusText(item.id);
     //   newList.push(item);

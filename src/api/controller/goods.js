@@ -112,8 +112,8 @@ module.exports = class extends Base {
     const keyword = this.get('keyword');
     const isNew = this.get('isNew');
     const isHot = this.get('isHot');
-    // const page = this.get('page');
-    // const size = this.get('size');
+    const page = this.get('page');
+    const size = this.get('size');
     const sort = this.get('sort');
     const order = this.get('order');
 
@@ -182,7 +182,7 @@ module.exports = class extends Base {
     }
 
     // 搜索到的商品
-    const goodsData = await goodsQuery.where(whereMap).field(['id', 'name', 'list_pic_url', 'retail_price','is_on_sale']).order(orderMap).countSelect();
+    const goodsData = await goodsQuery.where(whereMap).field(['id', 'name', 'list_pic_url', 'retail_price','is_on_sale']).order(orderMap).page(page, size).countSelect();
     goodsData.filterCategory = filterCategory.map(function(v) {
       v.checked = (think.isEmpty(categoryId) && v.id === 0) || v.id === parseInt(categoryId);
       return v;

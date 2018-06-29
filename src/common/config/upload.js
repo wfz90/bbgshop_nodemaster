@@ -1,4 +1,4 @@
-﻿const qiniu = require('qiniu')
+const qiniu = require('qiniu')
 const sha1 = require('sha1')
 
 // 七牛提供的公钥

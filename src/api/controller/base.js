@@ -9,6 +9,7 @@ module.exports = class extends think.Controller {
     const publicAction = this.config('publicAction');
     // 如果为非公开，则验证用户是否登录
     const controllerAction = this.ctx.controller + '/' + this.ctx.action;
+    // console.log(controllerAction);
     if (!publicController.includes(this.ctx.controller) && !publicAction.includes(controllerAction)) {
       if (think.userId <= 0) {
         return this.fail(401, '请先登录');

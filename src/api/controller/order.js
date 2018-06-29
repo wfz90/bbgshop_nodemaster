@@ -16,7 +16,7 @@ module.exports = class extends Base {
     if(parseInt(index) == 2){state = 300}  // 如果订单已经发货，没有收货，则可收货操作和退款、退货操作
     if(parseInt(index) == 3){state = 301}  // 如果订单已经支付，且已经收货，则可完成交易、评论和再次购买  //已完成
     if(parseInt(index) == 4){
-      const refundList = await this.model('order_refund').where({ user_id: think.userId,abled:0,isRefund:0}).select();
+      const refundList = await this.model('order_refund').where({ user_id: think.userId,abled:0,isRefund:0,state:1001}).select();
       console.log(refundList);
       let list = []
       for (var i = 0; i < refundList.length; i++) {
@@ -31,7 +31,8 @@ module.exports = class extends Base {
         list.push(obj)
       }
       const orderList = list
-      console.log(orderList);
+      // console.log("orderList");
+      // console.log(orderList);
       // return orderListno
       const newOrderList = [];
       for (const item of orderList) {
@@ -53,9 +54,11 @@ module.exports = class extends Base {
     }else {
 
       const orderList = await this.model('order').where({ user_id: think.userId,order_status:state,is_del:0}).select();
+      // console.log(orderList);
       const newOrderList = [];
       for (const item of orderList) {
         // 订单的商品
+        // console.log(item);
         item.goodsList = await this.model('order_goods').where({ order_id: item.id }).select();
         item.goodsCount = 0;
         item.goodsList.forEach(v => {
@@ -67,6 +70,7 @@ module.exports = class extends Base {
         item.handleOption = await this.model('order').getOrderHandleOption(item.id);
         newOrderList.push(item);
       }
+      // console.log(newOrderList);
       orderList.data = newOrderList;
       return this.success(orderList);
       // console.log(orderListno);
@@ -83,7 +87,18 @@ module.exports = class extends Base {
     // console.log(state);
 
   }
+  async checkorderispayAction() {
+    const sn = this.post('orderId')
+    console.log(sn);
+    const orderInfo = await this.model('order').where({ order_sn: sn }).find();
+    if (orderInfo.order_status == 0) {
+      return this.fail(17,'订单未支付')
+    }else {
+      return this.fail(506,'订单已支付')
 
+    }
+
+  }
   async detailAction() {
     const orderId = this.get('orderId');
     const orderInfo = await this.model('order').where({ id: orderId }).find();

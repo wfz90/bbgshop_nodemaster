@@ -91,7 +91,6 @@ module.exports = class extends Base {
 
     return this.success({
       Result:result,
-      abc:"123"
     })
   }
   async textAction() {
@@ -105,14 +104,15 @@ module.exports = class extends Base {
   //发送验证码
   async sedsodeAction() {
     const Phone = this.post('phone');
-    var Num="";
-      for(var i=0;i<6;i++)
+
+    var Num="7";
+      for(var i=0;i<5;i++)
       {
       Num+=Math.floor(Math.random()*10);
       }
       console.log(Num);
           //发送短信
-      smsClient.sendSMS({
+      let abc = await smsClient.sendSMS({
           PhoneNumbers: Phone,
           SignName: '贝堡Shop',
           TemplateCode: 'SMS_130795032',
@@ -121,18 +121,22 @@ module.exports = class extends Base {
           let {Code}=res
           if (Code === 'OK') {
               //处理返回参数
-              console.log(res)
+              // console.log(res)
           }
       }, function (err) {
           console.log(err)
+          console.log(err.data.Message)
+          return err.data.Message
+
       })
+      const message = abc
+      return this.success({
+        Phone:Phone,
+        num:Num,
+        message: message,
+      });
 
 
-    return this.success({
-      Phone:Phone,
-      num:Num
-    }
-    );
   }
 
   // 验证验证码
