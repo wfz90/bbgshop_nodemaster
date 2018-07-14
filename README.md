@@ -1,12 +1,13 @@
 ### BbgShop商城（服务端）
 
-本项目需要配合微信小程序端使用，GitHub: [https://github.com/yuanbon/bbgshop_miniprogram](https://github.com/yuanbon/bbgshop_miniprogram)
+本项目需要配合微信小程序端使用，GitHub: [https://github.com/yuanbon/bbgshop_miniprogram](https://github.com/yuanbon/bbgshop_miniprogram)，和后台
+GitHub: [https://github.com/yuanbon/bbgshop_admin](https://github.com/yuanbon/bbgshop_admin)，
 
 
 ### 本地开发环境配置
 + 克隆项目到本地
 ```
-git clone https://github.com/yuanbon/bbgshop_miniprogram
+git clone https://github.com/yuanbon/bbgshop_nodemaster
 ```
 > 注意数据库字符编码为utf8mb4
 + 更改数据库配置
@@ -43,10 +44,22 @@ module.exports = {
   }
 };
 ```
++ 填写七牛上传配置
+src/common/config/upload.js
+```
+// default config
+// 七牛提供的公钥
+const accessKey = ''
+// 七牛提供的私钥
+const secretKey = '-'
+// 存储空间名
+const bucketName = ''
+
+```
 
 + 安装依赖并启动
 ```
-cnpm install
+npm install
 npm start
 ```
 访问http://127.0.0.1:8360/

@@ -79,11 +79,11 @@ module.exports = class extends Base {
       var M = (date.getMonth()+1 < 10 ? '0'+(date.getMonth()+1) : date.getMonth()+1) + '/';
       var D = (date.getDate() < 10 ? '0'+date.getDate() : date.getDate());
       final_past_localtime[0] = Y + M + D
-      const point_order = await this.model('order').where({
+      const matching_order = await this.model('order').where({
         add_time: {'>': past_localtime_chage_list[0], '<':  past_localtime_chage_list[1], _logic: 'AND'},is_del: 0
       }).field(['add_time','order_status']).select();
       console.log(r);
-      final_past_localtime[1] = point_order
+      final_past_localtime[1] = matching_order
       past_localtime_chage_start = Number(past_localtime_chage_start) + 86400000
       final_past_time.push(final_past_localtime)
     }
@@ -110,7 +110,7 @@ module.exports = class extends Base {
     yesterday_limit_stamp[0] = Number(today_pase_local) - 86400000
     yesterday_limit_stamp[1] = Number(today_pase_local)
     const order_all = await this.model('order').where({is_del: 0}).field(['add_time','order_status','actual_price','refund_is_success']).select();
-    console.log(order_all);
+    // console.log(order_all);
     let order_all_today = []
     let order_all_yesterday = []
     for (var i = 0; i < order_all.length; i++) {

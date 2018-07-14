@@ -1,6 +1,6 @@
 // default config
 module.exports = {
-  // port: 10503,
+  // port: 10503, //修改端口
   default_module: 'api',
   weixin: {
     appid: '', // 小程序 appid
@@ -13,19 +13,10 @@ module.exports = {
   // 快递物流信息查询使用的是快递鸟接口，申请地址：http://www.kdniao.com/
   appid: '', // 对应快递鸟用户后台 用户ID
   appkey: '', // 对应快递鸟用户后台 API key
-  request_url: 'http://api.kdniao.cc/Ebusiness/EbusinessOrderHandle.aspx'
+  request_url: ''
 },
-  // vaptcha:{
-  //   vid:'',
-  //   key:''
-  // },
-  vaptcha:{ //人机行为验证 Vaptcha
+  vaptcha:{
     vid:'',
     key:''
   },
-  SMSClient:{ //阿里云通信基础能力业务短信发送
-    accessKeyId: '',
-    secretAccessKey: '',
-    queueName: ''
-  }
 };

@@ -85,7 +85,6 @@ module.exports = class extends Base {
       // console.log(goods_spec_arr);
       for (var k = 0; k < goods_spec_arr.length; k++) {
         spec_id[k] = goods_spec_arr[k][0].id+''
-
       }
       // console.log(spec_id);
       // var b1 = columnData[0].length
@@ -177,8 +176,6 @@ module.exports = class extends Base {
             retail_price:tableData[qo].price,
           })
         }
-        // console.log("999999999999999999999999999");
-
       }else if ( titleData.length == 2 ){
         for (var ow = 0; ow < spids[0].length; ow++) {
           lan.push(spids[0][ow][0]+"_"+spids[0][ow][1])

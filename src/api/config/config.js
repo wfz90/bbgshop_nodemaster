@@ -11,7 +11,9 @@ module.exports = {
     'brand',
     'search',
     'region',
-    'feedback'
+    'feedback',
+    'bargain',
+    'luckdraw'
   ],
 
   // 可以公开访问的Action
@@ -27,6 +29,8 @@ module.exports = {
     'cart/goodscount',
     'pay/notify',
     'luckdraw/findinfo',
-    'feedback/exchange'
+    'feedback/exchange',
+    'bargain/bargainlist',
+    'luckdraw/findjoinpeople'
   ]
 };

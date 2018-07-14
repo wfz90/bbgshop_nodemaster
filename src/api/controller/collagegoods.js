@@ -50,7 +50,7 @@ module.exports = class extends Base {
     console.log(orderid);
     await this.model('order').where({id:orderid}).update({
       order_status:301,
-      collage_isouttime: 1
+      // collage_isouttime: 1
     })
     // await this.model('order').where({id:orderid}).update({
     //   collage_isouttime: 1

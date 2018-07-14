@@ -1,7 +1,23 @@
 const Base = require('./base.js');
 
 module.exports = class extends Base {
-  /**
+  async findbargaininfoByIdAction() {
+    const id = this.post('id')
+    const data = await this.model('bargain').where({id:id}).find()
+    return this.success(data)
+  }
+  async bargainupdateAction() {
+    const id = this.post('id')
+    const bargain = this.post('bargain')
+    const data = await this.model('bargain').where({id:id}).update({
+      lowest_price: bargain.BargainMinPrice,
+      most_init_num: bargain.BargainInitNumber,
+      least_cut_num: bargain.BargainPeople,
+      activity_detail: bargain.BargainDetailEdit,
+    })
+    return this.success(data)
+  }
+  /**00
    * index action
    * @return {Promise} []
    */

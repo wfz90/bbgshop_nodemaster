@@ -42,7 +42,7 @@ module.exports = class extends Base {
     const model = this.model('goods');
     const info = await model.where({'id': goodsId}).find();
     const gallery = await this.model('goods_gallery').where({goods_id: goodsId}).limit(4).select();
-    const attribute = await this.model('goods_attribute').field('bbgshop_goods_attribute.value, bbgshop_attribute.name').join('bbgshop_attribute ON bbgshop_goods_attribute.attribute_id=bbgshop_attribute.id').order({'bbgshop_goods_attribute.id': 'asc'}).where({'bbgshop_goods_attribute.goods_id': goodsId}).select();
+    // const attribute = await this.model('goods_attribute').field('bbgshop_goods_attribute.value, bbgshop_attribute.name').join('bbgshop_attribute ON bbgshop_goods_attribute.attribute_id=bbgshop_attribute.id').order({'bbgshop_goods_attribute.id': 'asc'}).where({'bbgshop_goods_attribute.goods_id': goodsId}).select();
     const issue = await this.model('goods_issue').select();
     const brand = await this.model('brand').where({id: info.brand_id}).find();
     const commentCount = await this.model('comment').where({goods_id: goodsId}).count();
@@ -75,7 +75,7 @@ module.exports = class extends Base {
       info: info,
       collage: collage,
       gallery: gallery,
-      attribute: attribute,
+      // attribute: attribute,
       userHasCollect: userHasCollect,
       issue: issue,
       comment: comment,
@@ -113,7 +113,7 @@ module.exports = class extends Base {
     const isNew = this.get('isNew');
     const isHot = this.get('isHot');
     const page = this.get('page');
-    const size = this.get('size');
+    const size = 1000;
     const sort = this.get('sort');
     const order = this.get('order');
 
@@ -182,7 +182,9 @@ module.exports = class extends Base {
     }
 
     // 搜索到的商品
-    const goodsData = await goodsQuery.where(whereMap).field(['id', 'name', 'list_pic_url', 'retail_price','is_on_sale']).order(orderMap).page(page, size).countSelect();
+    const goodsData = await goodsQuery.where(whereMap).field(
+      ['id', 'name', 'list_pic_url', 'retail_price','is_on_sale']
+    ).order(orderMap).page(page, size).countSelect();
     goodsData.filterCategory = filterCategory.map(function(v) {
       v.checked = (think.isEmpty(categoryId) && v.id === 0) || v.id === parseInt(categoryId);
       return v;
@@ -282,9 +284,9 @@ module.exports = class extends Base {
     if (think.isEmpty(relatedGoodsIds)) {
       // 查找同分类下的商品
       const goodsCategory = await model.where({id: goodsId}).find();
-      relatedGoods = await model.where({category_id: goodsCategory.category_id}).field(['id', 'name', 'list_pic_url', 'retail_price']).limit(8).select();
+      relatedGoods = await model.order(['id DESC']).where({category_id: goodsCategory.category_id}).field(['id', 'name', 'list_pic_url', 'retail_price']).limit(8).select();
     } else {
-      relatedGoods = await model.where({id: ['IN', relatedGoodsIds]}).field(['id', 'name', 'list_pic_url', 'retail_price']).select();
+      relatedGoods = await model.order(['id DESC']).where({id: ['IN', relatedGoodsIds]}).field(['id', 'name', 'list_pic_url', 'retail_price']).select();
     }
 
     return this.success({

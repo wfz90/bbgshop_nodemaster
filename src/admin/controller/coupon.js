@@ -1,6 +1,25 @@
 const Base = require('./base.js');
 
 module.exports = class extends Base {
+  async findcouponinfoByIdAction() {
+    const id = this.post('id')
+    const data = await this.model('coupon_main').where({id:id}).find()
+    return this.success(data)
+  }
+  async couponupdateAction() {
+    const id = this.post('id')
+    const coupon = this.post('coupon')
+    const data = await this.model('coupon_main').where({id:id}).update({
+      coupon_name: coupon.name,
+      coupon_number: coupon.number,
+      coupon_value: coupon.value,
+      coupon_limit_value: coupon.limit_price,
+      Instructions: coupon.Instructions,
+      coupon_limit: coupon.limit_type,
+      coupon_type: coupon.type,
+    })
+    return this.success(data)
+  }
   /**
    * index action
    * @return {Promise} []
@@ -14,7 +33,7 @@ module.exports = class extends Base {
     const model = this.model('coupon_main');
     const data = await model.where({coupon_name: ['like', `%${couponname}%`]}).order(['id DESC']).page(page, size).countSelect();
     console.log(data);
-    // const newList = []; 
+    // const newList = [];
     // for (const item of data.data) {
     //   item.order_status_text = await this.model('order').getOrderStatusText(item.id);
     //   newList.push(item);

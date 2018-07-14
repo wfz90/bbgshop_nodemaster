@@ -1,6 +1,14 @@
 const Base = require('./base.js');
 
 module.exports = class extends Base {
+  ///////////////////////////////////////编辑抽奖时的操作
+  async findluckinfoByidAction() {
+    const id = this.post('id')
+    const data = await this.model('luckdraw').where({id:id}).find()
+    // console.log(data)
+    return this.success(data);
+  }
+  ///////////////////////////////////////
   async listAction() {
     const page = this.get('page') || 1;
     const size = this.get('size') || 10;
@@ -38,10 +46,21 @@ module.exports = class extends Base {
     console.log(luck,goods);
     const have = await this.model('luckdraw').where({luck_goods_id:goods.id}).select()
     if (have.length > 0) {
-      return this.fail(17,'已存在此商品的抽奖 ！')
+      const data = await this.model('luckdraw').where({id:have[0].id}).update({
+        luck_people_num: luck.LuckPeople,
+        luck_goods_num: luck.LuckGoodsNum,
+        // luck_create_time: luck.create_time,
+        luck_limit_time: luck.limit_time_local,
+        luck_open_time: luck.open_time_local,
+        luck_goods_detail: luck.LuckDetailEdit,
+        luck_goods_pic: goods.list_pic_url,
+        luck_goods_price: goods.retail_price,
+        luck_goods_name: goods.name
+      })
+      return this.success(data)
     }else{
       const data = await this.model('luckdraw').add({
-        abled:0, 
+        abled:0,
         luck_goods_id: goods.id,
         luck_people_num: luck.LuckPeople,
         luck_goods_num: luck.LuckGoodsNum,

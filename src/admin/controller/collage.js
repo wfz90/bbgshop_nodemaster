@@ -1,6 +1,22 @@
 const Base = require('./base.js');
 
 module.exports = class extends Base {
+  async findcollageinfoByIdAction() {
+    const id = this.post('id')
+    const data = await this.model('collage').where({id:id}).find()
+    return this.success(data)
+  }
+  async collageupdateAction() {
+    const id = this.post('id')
+    const collage = this.post('collage')
+    const data = await this.model('collage').where({id:id}).update({
+      collage_price: collage.CollageMinPrice,
+      least_coll_num: collage.CollagePeople,
+      most_init_num: collage.CollageInitNumber,
+      activity_detail: collage.CollageDetailEdit,
+    })
+    return this.success(data)
+  }
   /**
    * index action  添加拼团商品
    * @return {Promise} []

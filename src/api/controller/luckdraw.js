@@ -70,8 +70,7 @@ module.exports = class extends Base {
     let luckly_people_list = []
     for (var i = 0; i < luckly_list.length; i++) {
       let obj = {}
-      let list  = await this.model('luckdraw_user').where({luckdraw_main_id:id}).select()
-      obj = list[luckly_list[i]]
+      obj  = await this.model('user').where({id:luckly_list[i]}).find()
       // console.log(obj);
       luckly_people_list.push(obj)
     }
