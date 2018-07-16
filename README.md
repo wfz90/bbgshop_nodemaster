@@ -1,4 +1,4 @@
-### BbgShop商城（服务端）
+﻿### BbgShop商城（服务端）
 
 本项目需要配合微信小程序端使用，GitHub: [https://github.com/yuanbon/bbgshop_miniprogram](https://github.com/yuanbon/bbgshop_miniprogram)，和后台
 GitHub: [https://github.com/yuanbon/bbgshop_admin](https://github.com/yuanbon/bbgshop_admin)，
@@ -106,3 +106,7 @@ npm start
 
 ### 最后
 谢谢大家支持
+ 
+
+
+###后台登录账号为admin 密码为bbgshop
