@@ -11,6 +11,9 @@
   "dependencies": {
     "@alicloud/sms-sdk": "^1.0.8",
     "body-parser": "^1.18.2",
+    "vant": "^1.1.13",
+    "vue-axios": "^2.1.2",
+    "vue-quill-editor": "^3.0.6",
     "express": "^4.16.3",
     "express-session": "^1.15.6",
     "gm": "^1.23.0",
