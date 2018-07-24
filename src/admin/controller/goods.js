@@ -5,9 +5,23 @@ module.exports = class extends Base {
    * index action
    * @return {Promise} []
    */
+  async changeinfoAction() {
+    const changeinfo = this.post('changed_info')
+    // console.log(changeinfo);
+    const data = await this.model('goods').where({id:changeinfo.id}).update({
+      name: changeinfo.name,
+      goods_number: changeinfo.goods_number,
+      counter_price: changeinfo.counter_price,
+      retail_price: changeinfo.retail_price,
+      freight_price: changeinfo.freight_price,
+      cost_price: changeinfo.cost_price,
+      short_order: changeinfo.short_order
+    })
+    return this.success(data)
+  }
   async indexAction() {
     const page = this.post('page') || 1;
-    const size = this.post('size') || 15;
+    const size = this.post('size') || 10;
     const name = this.post('name') || '';
     const isnew = this.post('isnew');
     const ishot = this.post('ishot');

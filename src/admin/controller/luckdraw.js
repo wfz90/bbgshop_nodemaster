@@ -43,10 +43,12 @@ module.exports = class extends Base {
   async luckstoreAction() {
     const luck = this.post('Luck')
     const goods = this.post('goods')
-    console.log(luck,goods);
-    const have = await this.model('luckdraw').where({luck_goods_id:goods.id}).select()
-    if (have.length > 0) {
-      const data = await this.model('luckdraw').where({id:have[0].id}).update({
+    const luckId = this.post('luckId')
+    // console.log(luck,goods);
+    console.log(luckId);
+    // const have = await this.model('luckdraw').where({luck_goods_id:goods.id}).select()
+    if (luckId !== 0) {
+      const data = await this.model('luckdraw').where({id:luckId}).update({
         luck_people_num: luck.LuckPeople,
         luck_goods_num: luck.LuckGoodsNum,
         // luck_create_time: luck.create_time,

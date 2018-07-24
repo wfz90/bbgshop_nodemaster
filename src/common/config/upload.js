@@ -4,7 +4,7 @@ const sha1 = require('sha1')
 // 七牛提供的公钥
 const accessKey = ''
 // 七牛提供的私钥
-const secretKey = '-'
+const secretKey = ''
 // 存储空间名
 const bucketName = ''
 module.exports.upload = (req, res) => {

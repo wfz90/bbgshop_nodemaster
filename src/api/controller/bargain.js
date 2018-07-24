@@ -157,7 +157,10 @@ module.exports = class extends Base {
       })
       //再更新砍价主表
       const bargain_main = await this.model('bargain').where({id: bargoods.id}).find()
-
+      await this.model('bargain').where({id: bargoods.id}).update({
+        launched_num: Number(bargain_main.launched_num) + 1,
+        participate_num: Number(bargain_main.participate_num) + 1
+      })
       console.log("砍价发起很成功");
       return this.success(bargain_user_table_id)
     }
@@ -230,6 +233,12 @@ module.exports = class extends Base {
         goods_lowest_price: bargainUserInfo.goods_lowest_price,
         cut_price: cutprice,
         surplus_price: surplus,
+      })
+      //再更新砍价主表
+      const bargain_main = await this.model('bargain').where({id: bargainUserInfo.bargain_id}).find()
+      await this.model('bargain').where({id: bargainUserInfo.bargain_id}).update({
+        // launched_num: Number(bargain_main.launched_num) + 1,
+        participate_num: Number(bargain_main.participate_num) + 1
       })
       if (Number(surplus) <= 0.00) {
         await this.model('bargain_user').where({id:bargainUserInfo.id}).update({

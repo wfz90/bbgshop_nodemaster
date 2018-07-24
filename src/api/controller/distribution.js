@@ -138,7 +138,8 @@ module.exports = class extends Base {
   }
   async applydistributionAction() {
     const phone = this.post('phone')
-    const userinfo = await this.model('user').where({id:think.userId}).find()
+    const userid = this.post('userid')
+    const userinfo = await this.model('user').where({id:userid}).find()
     console.log(userinfo);
     const have = await this.model('distribution_apply').where({user_id:userinfo.id}).select()
     if (have.length == 0) {
@@ -161,33 +162,7 @@ module.exports = class extends Base {
       return this.success(data)
     }
   }
-  // async bedistributionAction() {
-  //   const phone = this.post('phone')
-  //   // let ordersnp = parseInt(ordersn)
-  //   // console.log(ordersnp);
-  //   // const orderinfo = await this.model('order').where({order_sn:ordersn}).find()
-  //   // console.log(orderinfo);
-  //   const userinfo = await this.model('user').where({id:think.userId}).find()
-  //   console.log(userinfo);
-  //   const have = await this.model('distribution_main').where({user_id:userinfo.id}).select()
-  //   if (have.length == 0) {
-  //     const data = await this.model('distribution_main').add({
-  //       user_mobile: phone,
-  //       user_name: userinfo.nickname,
-  //       user_id: userinfo.id,
-  //       add_time: new Date().getTime(),
-  //       own_have_deal_money: 0.00,
-  //       children_have_deal_money: 0.00,
-  //       can_withdraw_cash: 0.00,
-  //       have_deal_order_num: 0,
-  //       secret_code: Math.random().toString(36).substr(2),
-  //     })
-  //     return this.success(data)
-  //   }else {
-  //     console.log(have);
-  //   }
-  //
-  // }
+
   async setinvitermasterAction() {
     const nowuser = this.post('nowuser')
     const pasteruser = this.post('pasteruser')

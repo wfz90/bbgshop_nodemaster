@@ -1,6 +1,10 @@
 const Base = require('./base.js');
 
 module.exports = class extends Base {
+  async getfrighttempletelistAction() {
+    const data = await this.model('freight_template_main').select()
+    return this.success(data)
+  }
   async findGoodsInfoAction() {
     const id = this.post('id')
     const goodsInfo = await this.model('goods').where({id:id}).find()
@@ -47,6 +51,11 @@ module.exports = class extends Base {
           retail_price: info.price,
           extra_price: info.extraPrice,
           is_hot: info.is_hot,
+          freight_price: info.freight_type == 0 ? info.freight_price : 0.00,
+          freight_type: info.freight_type,
+          freight_template: info.freight_type == 1 ? info.freight_template : 0,
+          cost_price: info.cost_price,
+          short_order: info.short_order
       })
       for (var i = 0; i < info.loop_img.length; i++) {
         await this.model("goods_gallery").add({
@@ -74,21 +83,26 @@ module.exports = class extends Base {
           retail_price: info.price,
           extra_price: info.extraPrice,
           is_hot: info.is_hot,
+          freight_price: info.freight_type == 0 ? info.freight_price : 0.00,
+          freight_type: info.freight_type,
+          freight_template: info.freight_type == 1 ? info.freight_template : 0,
+          cost_price: info.cost_price,
+          short_order: info.short_order
       })
       await this.model("goods_gallery").where({
-        goods_id: info.id
-      }).delete()
-      for (var i = 0; i < info.loop_img.length; i++) {
-        console.log(i);
-        console.log(info.loop_img.length);
-        await this.model("goods_gallery").add({
-          goods_id: info.id,
-          img_url: info.loop_img[i].fileUrl,
-          img_desc: '',
-          sort_order: 5,
-        })
-      }
-      return this.fail(400,'商品基本数据更新成功 ！',info.id)
+          goods_id: info.id
+        }).delete()
+        for (var i = 0; i < info.loop_img.length; i++) {
+          console.log(i);
+          console.log(info.loop_img.length);
+          await this.model("goods_gallery").add({
+            goods_id: info.id,
+            img_url: info.loop_img[i].fileUrl,
+            img_desc: '',
+            sort_order: 5,
+          })
+        }
+        return this.fail(400,'商品基本数据更新成功 ！',info.id)
     }
   }
   async specifystoreAction() {
@@ -156,9 +170,6 @@ module.exports = class extends Base {
           goods_spec_arr.push(second_row)
         }
         console.log('-******************************************************************');
-        // console.log(unDeacartesList);
-        // console.log(oneD_rowlist);
-        // console.log(goods_spec_arr);
         let spec_id = []
         for (var k = 0; k < goods_spec_arr.length; k++) {
           let second_row_id = []
@@ -169,7 +180,6 @@ module.exports = class extends Base {
           spec_id.push(second_row_id)
         }
         console.log('-******************************************************************');
-        // console.log(spec_id);
         //笛卡尔乘积 spec_id 所有情况 只能笛卡尔乘积
         function Cartesian(a,b){
             var ret=[];

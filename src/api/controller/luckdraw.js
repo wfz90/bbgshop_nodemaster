@@ -1,6 +1,10 @@
 const Base = require('./base.js');
 
 module.exports = class extends Base {
+  async selectallluckdrawlistAction() {
+    const data = await this.model('luckdraw').where({abled:1,is_del:0}).select()
+    return this.success(data)
+  }
   async findinfoAction() {
     const id = this.post('id')
     console.log(id);
@@ -51,7 +55,7 @@ module.exports = class extends Base {
   }
   async findjoinpeopleAction() {
     const id = this.post('id')
-    const data = await this.model('luckdraw_user').where({luckdraw_main_id:id}).limit(7).select()
+    const data = await this.model('luckdraw_user').order(['id DESC']).where({luckdraw_main_id:id}).limit(7).select()
     return this.success(data)
   }
   async selectalljoinerAction() {

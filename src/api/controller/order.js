@@ -173,12 +173,12 @@ module.exports = class extends Base {
     const GoodsList = this.post('GoodsList');
     // 留言
     const postscript = this.post('postscript');
+    const freightPrice = this.post('freightPrice')
     // const message = this.post('message');
     const checkedAddress = await this.model('address').where({ id: addressId }).find();
     if (think.isEmpty(checkedAddress)) {
       return this.fail('请选择收货地址');
     }
-    const freightPrice = 0.00;
 
     // 获取要购买的商品
     const checkedGoodsList = await this.model('cart').where({ user_id: think.userId, session_id: 1, checked: 1 }).select();
@@ -188,8 +188,12 @@ module.exports = class extends Base {
 
     // 统计商品总价
     let goodsTotalPrice = 0.00;
+     // freight = 0.00;
+    // let freightPrice = 0.00;
+
     for (const cartItem of checkedGoodsList) {
       goodsTotalPrice += cartItem.number * cartItem.retail_price;
+      // freightPrice = Number(cartItem.freight) + Number(freightPrice)
     }
     console.log(goodsTotalPrice);
     const couponId = this.post('couponId');
@@ -212,8 +216,8 @@ module.exports = class extends Base {
     }
     const couponPrice = cupprice; // 使用优惠券减免的金额
 
-    const orderTotalPrice = (goodsTotalPrice + freightPrice - couponPrice).toFixed(2); // 订单的总价
-    const actualPrice = (orderTotalPrice / 1).toFixed(2) ;
+    const orderTotalPrice = (Number(goodsTotalPrice) + Number(freightPrice) - Number(couponPrice)).toFixed(2); // 订单的总价
+    const actualPrice = (Number(orderTotalPrice) / 1).toFixed(2) ;
     // let rlPrice = ''
     // let checkcup = []
     // let ordertolprice = ''
@@ -271,7 +275,7 @@ module.exports = class extends Base {
       city: checkedAddress.city_id,
       district: checkedAddress.district_id,
       address: checkedAddress.address,
-      freight_price: 0.00,
+      freight_price: freightPrice,
 
       // 留言
       postscript: postscript,

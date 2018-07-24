@@ -63,7 +63,7 @@ module.exports = class extends Base {
     sessionData.user_id = userId;
 
     // 查询用户信息
-    const newUserInfo = await this.model('user').field(['id', 'username', 'nickname', 'gender', 'avatar', 'birthday']).where({ id: userId }).find();
+    const newUserInfo = await this.model('user').field(['id', 'username', 'nickname', 'gender', 'avatar', 'birthday', 'mobile']).where({ id: userId }).find();
 
     // 更新登录信息
     userId = await this.model('user').where({ id: userId }).update({

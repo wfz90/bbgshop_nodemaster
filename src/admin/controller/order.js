@@ -5,6 +5,24 @@ module.exports = class extends Base {
    * index action
    * @return {Promise} []
    */
+  async changeorderpriceAction() {
+    const _ = require('lodash');
+    const id = this.post('id')
+    const price = this.post('price')
+    const orderinfo = await this.model('order').where({id:id}).find()
+    const date = new Date();
+    let sn = date.getFullYear() + _.padStart(date.getMonth() + 1, 2, '0') + _.padStart(date.getDate(), 2, '0') +
+      _.padStart(date.getHours(), 2, '0') + _.padStart(date.getMinutes(), 2, '0') +
+      _.padStart(date.getSeconds(), 2, '0') + _.random(100000, 999999);
+    console.log(id,price,sn);
+    const data = await this.model('order').where({id:id}).update({
+      order_sn:sn,
+      actual_price:price,
+      change_price_num: Number(orderinfo.change_price_num) + 1
+    })
+    return this.success(data)
+
+  }
   async indexAction() {
     const page = this.get('page') || 1;
     const size = this.get('size') || 10;

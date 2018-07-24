@@ -5,22 +5,22 @@ module.exports = class extends Base {
     const banner = await this.model('ad').where({ad_position_id: 1}).select();
     const channel = await this.model('channel').order({sort_order: 'asc'}).select();
     const luckdraw = await this.model('luckdraw').where({abled:1,is_del:0}).select();
-    const newGoodsList = await this.model('goods').field(['id', 'name', 'list_pic_url', 'retail_price']).order(['id DESC']).limit(8).where({
+    const newGoodsList = await this.model('goods').field(['id', 'name', 'list_pic_url', 'retail_price', 'have_pay_num']).order(['id DESC']).limit(8).where({
       is_new: 1,
       is_on_sale:1
     }).select();
-    const hotGoodsList = await this.model('goods').field(['id', 'name', 'list_pic_url', 'retail_price', 'goods_brief']).order(['id DESC']).limit(6).where({
+    const hotGoodsList = await this.model('goods').field(['id', 'name', 'list_pic_url', 'retail_price', 'goods_brief', 'have_pay_num']).order(['id DESC']).limit(6).where({
       is_hot: 1,
       is_on_sale:1
     }).select();
-    const brandList = await this.model('brand').where({is_new: 1}).order({new_sort_order: 'asc'}).limit(7).select();
+    // const brandList = await this.model('brand').where({is_new: 1}).order({new_sort_order: 'asc'}).limit(7).select();
     const topicList = await this.model('topic').limit(5).select();
 
     const categoryList = await this.model('category').where({parent_id: 0, name: ['<>', '推荐']}).select();
     const newCategoryList = [];
     for (const categoryItem of categoryList) {
       const childCategoryIds = await this.model('category').where({parent_id: categoryItem.id}).getField('id', 100);
-      const categoryGoods = await this.model('goods').field(['id', 'name', 'list_pic_url', 'retail_price']).order(['id DESC']).where({
+      const categoryGoods = await this.model('goods').field(['id', 'name', 'list_pic_url', 'retail_price', 'have_pay_num']).order(['short_order DESC']).where({
         category_id: ['IN', childCategoryIds],
         is_on_sale:1
       }).limit(8).select();
@@ -36,7 +36,7 @@ module.exports = class extends Base {
       channel: channel,
       newGoodsList: newGoodsList,
       hotGoodsList: hotGoodsList,
-      brandList: brandList,
+      // brandList: brandList,
       topicList: topicList,
       categoryList: newCategoryList.reverse()
     });

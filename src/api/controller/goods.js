@@ -183,7 +183,7 @@ module.exports = class extends Base {
 
     // 搜索到的商品
     const goodsData = await goodsQuery.where(whereMap).field(
-      ['id', 'name', 'list_pic_url', 'retail_price','is_on_sale']
+      ['id', 'name', 'list_pic_url', 'retail_price','is_on_sale','have_pay_num']
     ).order(orderMap).page(page, size).countSelect();
     goodsData.filterCategory = filterCategory.map(function(v) {
       v.checked = (think.isEmpty(categoryId) && v.id === 0) || v.id === parseInt(categoryId);
@@ -284,9 +284,9 @@ module.exports = class extends Base {
     if (think.isEmpty(relatedGoodsIds)) {
       // 查找同分类下的商品
       const goodsCategory = await model.where({id: goodsId}).find();
-      relatedGoods = await model.order(['id DESC']).where({category_id: goodsCategory.category_id}).field(['id', 'name', 'list_pic_url', 'retail_price']).limit(8).select();
+      relatedGoods = await model.order(['id DESC']).where({category_id: goodsCategory.category_id}).field(['id', 'name', 'list_pic_url', 'retail_price', 'have_pay_num']).limit(8).select();
     } else {
-      relatedGoods = await model.order(['id DESC']).where({id: ['IN', relatedGoodsIds]}).field(['id', 'name', 'list_pic_url', 'retail_price']).select();
+      relatedGoods = await model.order(['id DESC']).where({id: ['IN', relatedGoodsIds]}).field(['id', 'name', 'list_pic_url', 'retail_price', 'have_pay_num']).select();
     }
 
     return this.success({

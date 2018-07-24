@@ -27,7 +27,7 @@ module.exports = class extends Base {
     }
     const WeixinSerivce = this.service('weixin', 'api');
     console.log(WeixinSerivce);
-    console.log("9999999999");
+    // console.log("9999999999");
     try {
       const returnParams = await WeixinSerivce.createUnifiedOrder({
         openid: openid,
@@ -84,13 +84,28 @@ module.exports = class extends Base {
      const status = this.get("status")
      console.log(status);
      console.log(parseInt(status));
+     const orderInfo = await this.model('order').where({ order_sn: orderId}).find()
+     const ordergoods = await this.model('order_goods').where({ order_id: orderInfo.id}).select()
+
      if (parseInt(status) == 201) {
+       for (var i = 0; i < ordergoods.length; i++) {
+         const goods_info = await this.model('goods').where({id:ordergoods[i].goods_id}).find()
+         await this.model('goods').where({id:ordergoods[i].goods_id}).update({
+           have_pay_num: Number(goods_info.have_pay_num) + 1
+         })
+       }
        const cancelorderList = await this.model('order').where({ order_sn: orderId}).update({
          order_status: status,
          pay_time:new Date().getTime()
        });
      }
      if (parseInt(status) == 301) {
+       for (var j = 0; j < ordergoods.length; j++) {
+         const goods_info = await this.model('goods').where({id:ordergoods[j].goods_id}).find()
+         await this.model('goods').where({id:ordergoods[j].goods_id}).update({
+           have_confirm_num: Number(goods_info.have_confirm_num) + 1
+         })
+       }
        const cancelorderList = await this.model('order').where({ order_sn: orderId}).update({
          order_status: status,
          confirLogic_time: new Date().getTime()

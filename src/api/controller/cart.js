@@ -42,12 +42,14 @@ module.exports = class extends Base {
     let goodsAmount = 0.00;
     let checkedGoodsCount = 0;
     let checkedGoodsAmount = 0.00;
+    let freight = 0.00
     for (const cartItem of cartList) {
       goodsCount += cartItem.number;
       goodsAmount += cartItem.number * cartItem.retail_price;
       if (!think.isEmpty(cartItem.checked)) {
         checkedGoodsCount += cartItem.number;
         checkedGoodsAmount += cartItem.number * cartItem.retail_price;
+        freight = Number(cartItem.freight_price) + Number(freight)
       }
 
       // 查找商品的图片
@@ -56,11 +58,13 @@ module.exports = class extends Base {
 
     return {
       cartList: cartList,
+      freight: freight,
       cartTotal: {
         goodsCount: goodsCount,
         goodsAmount: goodsAmount,
         checkedGoodsCount: checkedGoodsCount,
-        checkedGoodsAmount: checkedGoodsAmount
+        checkedGoodsAmount: checkedGoodsAmount,
+        freight: freight
       }
     };
   }
@@ -117,21 +121,6 @@ module.exports = class extends Base {
       }
       console.log(goodsSepcifitionValue);
       // 添加到购物车
-      // const cartData = {
-      //   goods_id: goodsId,
-      //   product_id: productId,
-      //   goods_sn: productInfo.goods_sn,
-      //   goods_name: goodsInfo.name,
-      //   list_pic_url: goodsInfo.list_pic_url,
-      //   number: number,
-      //   session_id: 1,
-      //   user_id: think.userId,
-      //   retail_price: productInfo.retail_price,
-      //   market_price: productInfo.retail_price,
-      //   goods_specifition_name_value: goodsSepcifitionValue.join(';'),
-      //   goods_specifition_ids: productInfo.goods_specification_ids,
-      //   checked: 1
-      // };
       const cartData = await this.model('cart').add({
         goods_id: goodsId,
         product_id: productId,
@@ -145,7 +134,10 @@ module.exports = class extends Base {
         market_price: productInfo.retail_price,
         goods_specifition_name_value: goodsSepcifitionValue.join(';'),
         goods_specifition_ids: productInfo.goods_specification_ids,
-        checked: 1
+        checked: 1,
+        freight_price: goodsInfo.freight_price,
+        freight_template: goodsInfo.freight_template,
+        freight_type: goodsInfo.freight_type,
       });
       console.log(cartData);
       // const data = ''
@@ -215,23 +207,6 @@ module.exports = class extends Base {
         }).getField('value');
       }
 
-      // 添加到购物车
-      // const cartData = {
-      //   goods_id: goodsId,
-      //   product_id: productId,
-      //   goods_sn: productInfo.goods_sn,
-      //   goods_name: goodsInfo.name,
-      //   list_pic_url: goodsInfo.list_pic_url,
-      //   number: number,
-      //   session_id: 1,
-      //   user_id: think.userId,
-      //   retail_price: productInfo.retail_price,
-      //   market_price: productInfo.retail_price,
-      //   goods_specifition_name_value: goodsSepcifitionValue.join(';'),
-      //   goods_specifition_ids: productInfo.goods_specification_ids,
-      //   checked: 0
-      // };
-
       // await this.model('cart').thenAdd(cartData, {product_id: productId});
       await this.model('cart').add({
         goods_id: goodsId,
@@ -246,7 +221,10 @@ module.exports = class extends Base {
         market_price: productInfo.retail_price,
         goods_specifition_name_value: goodsSepcifitionValue.join(';'),
         goods_specifition_ids: productInfo.goods_specification_ids,
-        checked: 0
+        checked: 0,
+        freight_price: goodsInfo.freight_price,
+        freight_template: goodsInfo.freight_template,
+        freight_type: goodsInfo.freight_type,
       });
     } else {
       // 如果已经存在购物车中，则数量增加
@@ -402,23 +380,26 @@ module.exports = class extends Base {
    * @returns {Promise.<void>}
    */
   async checkoutAction() {
-    const addressId = this.get('addressId'); // 收货地址id
-    const couponId = this.get('couponId'); // 使用的优惠券id
+    const addressId = this.post('addressId'); // 收货地址id
+    const couponId = this.post('couponId'); // 使用的优惠券id
+    const userId = this.post('userId')
+    console.log('**************************用户id');
+    console.log(userId);
     console.log(couponId);
     // console.log(parseInt(couponId))
     // if (typeof(couponId) == "NaN") {
     //   console.log("123456789");
     // }
     // 选择的收货地址
-    const addressInfo = await this.model('address').where({user_id: think.userId}).select();
+    const addressInfo = await this.model('address').where({user_id: userId}).select();
     let checkedAddress = new Array();
     if (think.isEmpty(addressId)) {
         // let abc = "123"
-      checkedAddress = await this.model('address').where({user_id: think.userId}).select();
+      checkedAddress = await this.model('address').where({user_id: userId}).select();
 
     } else {
       // let abc = "000"
-      checkedAddress = await this.model('address').where({id: addressId, user_id: think.userId}).find();
+      checkedAddress = await this.model('address').where({id: addressId, user_id: userId}).find();
 
     }
 
@@ -433,167 +414,205 @@ module.exports = class extends Base {
     // }
 
 
-    // 根据收货地址计算运费
-    const freightPrice = 0;
+
 
     // 获取要购买的商品
     const cartData = await this.getCart();
+
     const checkedGoodsList = cartData.cartList.filter(function(v) {
       return v.checked === 1;
     });
+    const ordinaryFreightGoods = checkedGoodsList.filter(function(v) {
+      return v.freight_type === 0;
+    }); //统一运费的商品
+    const templeteFreightGoods = checkedGoodsList.filter(function(v) {
+      return v.freight_type === 1;
+    });//运费模板的商品
 
-    // 获取可用的优惠券信息，功能还示实现
-    const goodsTotalPrice = cartData.cartTotal.checkedGoodsAmount; // 商品总价
-
-    const couponList = await this.model('coupon_user').where({user_id:think.userId,used_type:0}).select()
-    let cupprice = 0
-    if (parseInt(couponId) == 0) {
-      // console.log("000000000000000000000000");
-      // const couponPrice = 0.00
-      cupprice = 0
-
-    }else {
-      // cupprice = 0
-      let selcup = await this.model('coupon_user').where({user_id:think.userId,coupon_id:couponId}).find()
-      if (selcup.coupon_type == 0) {
-        cupprice = (selcup.coupon_value / 1).toFixed(2)
-      }else if (selcup.coupon_type == 1){
-        cupprice = (goodsTotalPrice - (goodsTotalPrice * ( selcup.coupon_value / 10 ))).toFixed(2)
+    // 根据收货地址计算运费
+    console.log("******************************************************************");
+    //计算运费
+    console.log('以下为统一运费的商品');
+    if (checkedGoodsList.length > 0) {
+      console.log(ordinaryFreightGoods);
+      let ordinaryFreightGoods_Fright = 0.00
+      for (var i = 0; i < ordinaryFreightGoods.length; i++) {
+        ordinaryFreightGoods_Fright = Number(ordinaryFreightGoods[i].freight_price) * Number(ordinaryFreightGoods[i].number) + Number(ordinaryFreightGoods_Fright)
       }
-    }
-    // let itemKey = 0;
-    // let couponUserList = []
-    // for (const couponItem of couponallList) {
-    //   if (couponItem.point_user == '') {
-    //     let obj = {}
-    //     obj = couponItem
-    //     obj.start_time = new Date(couponItem.validity_start * 1).toLocaleString();
-    //     obj.end_time = new Date(couponItem.validity_end * 1).toLocaleString();
-    //     couponUserList.push(obj)
-    //   }else if (couponItem.point_user !== '') {
-    //     let str = couponItem.point_user
-    //     let couid = couponItem.coupon_id
-    //     let arr = str.split(",")
-    //     for (var i = 0; i < arr.length; i++) {
-    //       console.log(think.userId);
-    //       if (arr[i] == think.userId) {
-    //         console.log("bingo");
-    //         const couponUser = await this.model('coupon_user').where({user_id: think.userId,coupon_id:couid}).select()
-    //         let objj = {}
-    //         objj = couponUser[0]
-    //         objj.start_time = new Date(couponUser[0].validity_start * 1).toLocaleString();
-    //         objj.end_time = new Date(couponUser[0].validity_end * 1).toLocaleString();
-    //         couponUserList.push(objj)
-    //       }
-    //     }
-    //     console.log(arr);
-    //   }
-    //   itemKey += 1;
-    // }
-    // console.log(couponUserList);
-    const couponPrice = cupprice; // 使用优惠券减免的金额
+      console.log('以下为统一运费商品运费总和');
+      console.log(ordinaryFreightGoods_Fright);
+      console.log('以下为用户选择的收货地址的省');
+      console.log(checkedAddress.province_id);
+      console.log('以下为使用运费模板的商品');
+      // console.log(templeteFreightGoods);
+      console.log('以下为模板商品的运费模板主表');
 
-    // const couponList = couponUserList;
-    // let price = 0
-    // let listall = []
-    // if (couponId == 1) {
-    //       //没有选择
-    //       let price = 0
-    //       let listall = []
-    //   }else{
-    //       //选择优惠券
-    //
-    //       for (var i = 0; i < couponList.length; i++) {
-    //         if ( couponList[i].coupon_id == couponId) {
-    //             listall = couponList[i]
-    //             if (listall.coupon_limit == 0) { //不限制门槛
-    //               if (listall.coupon_type == 0) { //指定金额类型
-    //                   price = (listall.coupon_value/1); // 使用优惠券减免的金额
-    //               }else if(listall.coupon_type == 1){ //折扣金额；类型
-    //                 console.log(goodsTotalPrice);
-    //                 console.log(listall.coupon_value);
-    //                   price = (goodsTotalPrice -( goodsTotalPrice * (listall.coupon_value)/10)).toFixed(2); // 使用优惠券减免的金额
-    //               }
-    //             }else if(listall.coupon_limit == 1){ //优惠券门槛
-    //               if (goodsTotalPrice <= listall.coupon_limit_value) {
-    //                 console.log("价格不够");
-    //
-    //               }else {
-    //                 if (listall.coupon_type == 0) { //指定金额类型
-    //                   price = (listall.coupon_value/1); // 使用优惠券减免的金额
-    //                 }else if(listall.coupon_type == 1){ //折扣金额；类型
-    //                     price = (goodsTotalPrice - ( goodsTotalPrice * (listall.coupon_value)/10)).toFixed(2); // 使用优惠券减免的金额
-    //                 }
-    //               }
-    //
-    //             }
-    //             // price = (couponList[i].coupon_value/1); // 使用优惠券减免的金额
-    //         }
-    //         // array[i]
-    //       }
-    // }
-
-    // const couponListAll = listall;
-    // const couponPrice = 0; // 使用优惠券减免的金额
-    // 计算订单的费用
-    // const goodsTotalPrice = cartData.cartTotal.checkedGoodsAmount; // 商品总价
-    const orderTotalPrice = (cartData.cartTotal.checkedGoodsAmount + freightPrice - couponPrice).toFixed(2); // 订单的总价
-    const actualPrice = (orderTotalPrice / 1).toFixed(2) ; // 减去其它支付的金额后，要实际支付的金额
-    //
-    // console.log(orderTotalPrice);
-    // // console.log(goodsTotalPrice);
-    //
-    // console.log(couponList);
-    // let ableCup = [] //可使用的优惠券
-    // let unpriceCup = [] //不可使用 价格不足
-    // let untimeCup = [] //不可使用 过期
-    //
-    // for (var i = 0; i < couponList.length; i++) {
-    //   // console.log(i);
-    //   let endtime = new Date(couponList[i].end_time).getTime()
-    //   let nowtime = new Date().getTime()
-    //   // console.log(orderTotalPrice);
-    //   if (couponList[i].coupon_limit_value > orderTotalPrice) {
-    //     console.log("价格不足");
-    //     unpriceCup.push(couponList[i])
-    //   }else if(nowtime > endtime){
-    //     console.log("已过期");
-    //     untimeCup.push(couponList[i])
-    //   }else{
-    //     console.log("可使用");
-    //     ableCup.push(couponList[i])
-    //   }
-    //
-    // }
-    // const couponListAll = await this.model('user_coupon_copy').where({ id: couponId}).find();
-    // const couponPrice = (couponListAll.value/100).toFixed(2); // 使用优惠券减免的金额
-
-      // if (think.isEmpty(couponId)) {
-      //     const couponId = 132
-      //     // const couponListAll = await this.model('user_coupon_copy').where({ id: couponId}).find();
-      //     // const couponPrice = (couponListAll.value/100).toFixed(2); // 使用优惠券减免的金额
+      let templeteFreightGoods_templete_id_no_repeating = [] //使用了运费模板的商品的模板id没有去除重复
+      for (var k = 0; k < templeteFreightGoods.length; k++) {
+        for (var l = 0; l < Number(templeteFreightGoods[k].number); l++) {
+          templeteFreightGoods_templete_id_no_repeating.push(templeteFreightGoods[k].freight_template)
+        }
+      }
+      console.log(templeteFreightGoods_templete_id_no_repeating);
+      let templeteFreightGoods_templete_id_repeating = templeteFreightGoods_templete_id_no_repeating.filter(function (element, index, array) {
+          return array.indexOf(element) === index;
+      });
+      console.log(templeteFreightGoods_templete_id_repeating); //去重
+      let templeteFreightGoods_templete = [] //匹配到的运费模板规则
+      for (var m = 0; m < templeteFreightGoods_templete_id_repeating.length; m++) {
+        const obj = await this.model('freight_template_main').where({id:templeteFreightGoods_templete_id_repeating[m]}).find()
+        let rules_list = await this.model('freight_template_auxiliary').where({temp_main_id:templeteFreightGoods_templete_id_repeating[m]}).select()
+        obj.rules_list = rules_list
+        templeteFreightGoods_templete.push(obj)
+      }
+      console.log('以下为匹配到的运费模板');
+      console.log(templeteFreightGoods_templete);
+      let all_templeteFreightGoods_templete_rules = []
+      for (var n = 0; n < templeteFreightGoods_templete.length; n++) {
+        for (var o = 0; o < templeteFreightGoods_templete[n].rules_list.length; o++) {
+          all_templeteFreightGoods_templete_rules.push(templeteFreightGoods_templete[n].rules_list[o])
+        }
+      }
+      console.log('以下为所有模板的规则');
+      // console.log(all_templeteFreightGoods_templete_rules);
+      for (var p = 0; p < all_templeteFreightGoods_templete_rules.length; p++) {
+        let point_id_list = []
+        all_templeteFreightGoods_templete_rules[p].point_id_list = all_templeteFreightGoods_templete_rules[p].temp_point_city_id.split(',').map(num=>Number(num))
+      }
+      // console.log(all_templeteFreightGoods_templete_rules);
+      // 以下开始查找省是否在规则内
+      let all_in_rules_list = [] //省在规则内的所有规则
+      for (var q = 0; q < all_templeteFreightGoods_templete_rules.length; q++) {
+        if (Number(all_templeteFreightGoods_templete_rules[q].point_id_list.indexOf(checkedAddress.province_id)) >= 0) {
+          all_in_rules_list.push(all_templeteFreightGoods_templete_rules[q])
+        }
+      }
+      console.log('以下为存在省的所有规则');
+      console.log(all_in_rules_list);
+      let fail_userd_point = all_in_rules_list[0] //最终使用的规则
+      for (var r = 0; r < all_in_rules_list.length; r++) {
+        if (Number(fail_userd_point.temp_first_freight) < Number(all_in_rules_list[r].temp_first_freight)) { //首重最大
+          fail_userd_point = all_in_rules_list[r]
+        }
+      }
+      console.log("*************最终使用的规则");
+      console.log(fail_userd_point);
+      let templeteFreightGoods_freight = 0.00
+      let fail_num = templeteFreightGoods_templete_id_no_repeating.length
+      // console.log(Number(fail_userd_point.temp_first_freight));
+      // console.log(Number(fail_num - 1 ) / Number(fail_userd_point.temp_continue_weight) * Number(fail_userd_point.temp_continue_freight));
+      templeteFreightGoods_freight = all_in_rules_list.length == 0 ? 0.00 : Number(fail_userd_point.temp_first_freight) +
+      Number((Number(fail_num - 1 ) / Number(fail_userd_point.temp_continue_weight) * Number(fail_userd_point.temp_continue_freight)).toFixed(2))
+      console.log("老子才是运费模板的总运费啊 智障!!!!");
+      console.log(templeteFreightGoods_freight);
+      // console.log(checkedGoodsList);
+      // for (var i = 0; i < cartData.length; i++) {
+      //
       // }
+      let fail_order_freight = Number(ordinaryFreightGoods_Fright) + Number(templeteFreightGoods_freight)
+      // if (Number(ordinaryFreightGoods_Fright) > Number(templeteFreightGoods_freight)) {
+      //   fail_order_freight = ordinaryFreightGoods_Fright
+      // }
+      console.log('终于等到你,最终运费');
+      console.log(fail_order_freight);
+      const freightPrice = Number(fail_order_freight).toFixed(2)
+      // 获取可用的优惠券信息，功能还示实现
+      const goodsTotalPrice = cartData.cartTotal.checkedGoodsAmount; // 商品总价
+
+      const couponList = await this.model('coupon_user').where({user_id:userId,used_type:0}).select()
+      let cupprice = 0
+      if (parseInt(couponId) == 0) {
+        cupprice = 0
+      }else {
+        let selcup = await this.model('coupon_user').where({user_id:userId,coupon_id:couponId}).find()
+        if (selcup.coupon_type == 0) {
+          cupprice = (selcup.coupon_value / 1).toFixed(2)
+        }else if (selcup.coupon_type == 1){
+          cupprice = (goodsTotalPrice - (goodsTotalPrice * ( selcup.coupon_value / 10 ))).toFixed(2)
+        }
+      }
+      const couponPrice = cupprice; // 使用优惠券减免的金额
+
+      console.log("////////////////////////////////////////////////////////////////////////");
+      // console.log(freightPrice);
+      // const couponListAll = listall;
+      // const couponPrice = 0; // 使用优惠券减免的金额
+      // 计算订单的费用
+      // const goodsTotalPrice = cartData.cartTotal.checkedGoodsAmount; // 商品总价
+      const orderTotalPrice = (Number(cartData.cartTotal.checkedGoodsAmount) + Number(freightPrice) - Number(couponPrice)).toFixed(2); // 订单的总价
+      const actualPrice = (Number(orderTotalPrice) / 1).toFixed(2) ; // 减去其它支付的金额后，要实际支付的金额
+      //
 
 
-    return this.success({
-      // ab2:abc,
-      orderTotalPrice:orderTotalPrice,
-      addressInfo:addressInfo,
-      couponId:couponId,
-      addressId:addressId,
-      checkedAddress: checkedAddress,
-      freightPrice: freightPrice,
-      // checkedCoupon: couponListAll,
-      couponList: couponList,
-      // ableCup:ableCup,
-      // unpriceCup:unpriceCup,
-      // untimeCup:untimeCup,
-      couponPrice: couponPrice,
-      checkedGoodsList: checkedGoodsList,
-      goodsTotalPrice: goodsTotalPrice,
-      orderTotalPrice: orderTotalPrice,
-      actualPrice: actualPrice
-    });
+      return this.success({
+        // ab2:abc,
+        orderTotalPrice:orderTotalPrice,
+        addressInfo:addressInfo,
+        couponId:couponId,
+        addressId:addressId,
+        checkedAddress: checkedAddress,
+        freightPrice: freightPrice,
+        // checkedCoupon: couponListAll,
+        couponList: couponList,
+        // ableCup:ableCup,
+        // unpriceCup:unpriceCup,
+        // untimeCup:untimeCup,
+        couponPrice: couponPrice,
+        checkedGoodsList: checkedGoodsList,
+        goodsTotalPrice: goodsTotalPrice,
+        orderTotalPrice: orderTotalPrice,
+        actualPrice: actualPrice
+      });
+    }else {
+      const freightPrice = 0.00
+      // 获取可用的优惠券信息，功能还示实现
+      const goodsTotalPrice = cartData.cartTotal.checkedGoodsAmount; // 商品总价
+
+      const couponList = await this.model('coupon_user').where({user_id:userId,used_type:0}).select()
+      let cupprice = 0
+      if (parseInt(couponId) == 0) {
+        cupprice = 0
+      }else {
+        let selcup = await this.model('coupon_user').where({user_id:userId,coupon_id:couponId}).find()
+        if (selcup.coupon_type == 0) {
+          cupprice = (selcup.coupon_value / 1).toFixed(2)
+        }else if (selcup.coupon_type == 1){
+          cupprice = (goodsTotalPrice - (goodsTotalPrice * ( selcup.coupon_value / 10 ))).toFixed(2)
+        }
+      }
+      const couponPrice = cupprice; // 使用优惠券减免的金额
+
+      console.log("////////////////////////////////////////////////////////////////////////");
+      // console.log(freightPrice);
+      // const couponListAll = listall;
+      // const couponPrice = 0; // 使用优惠券减免的金额
+      // 计算订单的费用
+      // const goodsTotalPrice = cartData.cartTotal.checkedGoodsAmount; // 商品总价
+      const orderTotalPrice = (Number(cartData.cartTotal.checkedGoodsAmount) + Number(freightPrice) - Number(couponPrice)).toFixed(2); // 订单的总价
+      const actualPrice = (Number(orderTotalPrice) / 1).toFixed(2) ; // 减去其它支付的金额后，要实际支付的金额
+      //
+
+
+      return this.success({
+        // ab2:abc,
+        orderTotalPrice:orderTotalPrice,
+        addressInfo:addressInfo,
+        couponId:couponId,
+        addressId:addressId,
+        checkedAddress: checkedAddress,
+        freightPrice: freightPrice,
+        // checkedCoupon: couponListAll,
+        couponList: couponList,
+        // ableCup:ableCup,
+        // unpriceCup:unpriceCup,
+        // untimeCup:untimeCup,
+        couponPrice: couponPrice,
+        checkedGoodsList: checkedGoodsList,
+        goodsTotalPrice: goodsTotalPrice,
+        orderTotalPrice: orderTotalPrice,
+        actualPrice: actualPrice
+      });
+    }
   }
 
 
