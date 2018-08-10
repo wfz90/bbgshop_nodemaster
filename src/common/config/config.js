@@ -29,5 +29,10 @@ module.exports = {
     accessKeyId: '',
     secretAccessKey: '',
     queueName: ''
+  },
+  qiniu: {
+    accessKey: '',//七牛上传的公钥
+    secretKey: '',//七牛上传的私钥
+    bucketName: '',//七牛上传的储存空间名
   }
 };
