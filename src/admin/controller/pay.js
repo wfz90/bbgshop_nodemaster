@@ -30,7 +30,7 @@ module.exports = class extends Base {
     try {
       const returnParams = await WeixinSerivce.createRefundOrder({
         out_trade_no: orderInfo.order_sn,
-        total_fee: parseInt(orderInfo.goods_price * 100),
+        total_fee: parseInt(orderInfo.actual_price * 100),
         spbill_create_ip: '',
         pay_id:orderInfo.pay_id,
         actual_price:orderInfo.actual_price,

@@ -1,6 +1,20 @@
 const Base = require('./base.js');
 
 module.exports = class extends Base {
+  async getdisconfigAction() {
+    const data = await this.model('distribution_rate').select()
+    return this.success(data);
+  }
+  async updateconfigAction() {
+    const info = this.post('info')
+    console.log(info);
+    const data = await this.model('distribution_rate').where({id:1}).update({
+      rate: info.localrate,
+      price: info.localprice,
+      rules_text: info.rules_value,
+    })
+    return this.success(data)
+  }
   async indexAction() {
     const page = this.get('page') || 1;
     const size = this.get('size') || 5;

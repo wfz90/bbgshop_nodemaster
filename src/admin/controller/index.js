@@ -65,21 +65,44 @@ module.exports = class extends Base {
     // const data = await this.model('ad').delete()
       return this.success(data)
   }
-
-  async setissueAction() {
-    const value = this.post('issue')
-    console.log(value);
-    for (var i = 0; i < value.length; i++) {
-      const data = await this.model('goods_issue').where({id:i+1}).update({
-        goods_id:"0",
-        question:value[i].question,
-        answer:value[i].answer,
-      });
-
+  async updateissueAction() {
+    const info = this.post("info")
+    console.log(info);
+    if (info.id == 0) {
+      const data = await this.model('goods_issue').add({
+        question:info.question,
+        answer:info.answer
+      })
+      return this.success(data)
+    }else {
+      const data = await this.model('goods_issue').where({id:info.id}).update({
+        question:info.question,
+        answer:info.answer
+      })
+      return this.success(data)
     }
+  }
+  async delissueAction() {
+    const id = this.post('id')
+    console.log(id);
+    const data = await this.model('goods_issue').where({id:id}).limit(1).delete()
+    return this.success(data)
+  }
+
+  // async setissueAction() {
+  //   const value = this.post('issue')
+  //   console.log(value);
+  //   for (var i = 0; i < value.length; i++) {
+  //     const data = await this.model('goods_issue').where({id:i+1}).update({
+  //       goods_id:"0",
+  //       question:value[i].question,
+  //       answer:value[i].answer,
+  //     });
+  //
+  //   }
     // const data = await this.model('ad').delete()
       // return this.success(data)
-  }
+  // }
 
 
 

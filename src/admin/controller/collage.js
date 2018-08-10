@@ -38,7 +38,7 @@ module.exports = class extends Base {
     // const consignee = this.get('consignee') || '';
 
     const model = this.model('collage');
-    const data = await model.where({goods_name: ['like', `%${goodsname}%`]}).order(['id DESC']).page(page, size).countSelect();
+    const data = await model.where({goods_name: ['like', `%${goodsname}%`],is_delete:0}).order(['id DESC']).page(page, size).countSelect();
     return this.success(data);
   }
   async collagestoreAction() {
@@ -63,6 +63,7 @@ module.exports = class extends Base {
       most_init_num: collage.CollageInitNumber,
       least_coll_num: collage.CollagePeople,
       activity_detail: collage.CollageDetailEdit,
+      main_img: collage.main_img,
       mate_code: code,
       purchased_num: 0,
       launched_num: 0,
@@ -98,7 +99,7 @@ module.exports = class extends Base {
     // const consignee = this.get('consignee') || '';
 
     const model = this.model('collage');
-    const data = await model.where({id: id}).delete()
+    const data = await model.where({id: id}).update({is_delete:1})
     // const data = await model.where({ id: id).update({
     //
     // });

@@ -8,7 +8,7 @@ module.exports = class extends think.Controller {
         for (var i = 0; i < collsgelist.length; i++) {
           // console.log(i);
           // console.log(collsgelist[i].end_time);
-          if (parseInt(collsgelist[i].end_time) <= new Date().getTime() ) {
+          if ((collsgelist[i].end_time !== 0) && (collsgelist[i].end_time <= new Date().getTime()) ) {
             await this.model("collage_user").where({id:collsgelist[i].id}).update({
               is_outtime:1
             })
@@ -20,20 +20,20 @@ module.exports = class extends think.Controller {
       console.log("拼团过期时间已清理 ！");
       const bargainlist = await this.model('bargain_user').select()
         for (var j = 0; j < bargainlist.length; j++) {
-          if (parseInt(bargainlist[j].end_time) <= new Date().getTime() ) {
+          if ((bargainlist[j].end_time !== 0) && (bargainlist[j].end_time <= new Date().getTime()) ) {
             await this.model("bargain_user").where({id:bargainlist[j].id}).update({
               is_outtime:1
             })
         }
       }
-      console.log("拼团过期时间已清理 ！");
+      console.log("砍价过期时间已清理 ！");
       //清理未支付订单
       const orderlist = await this.model('order').where({
           add_time: {'>': new Date().getTime() - 7200000, '<': new Date().getTime() , _logic: 'AND'},is_del: 0,pay_time: 0
         }).select();
-        console.log(orderlist);
+        // console.log(orderlist);
         for (var h = 0; h < orderlist.length; h++) {
-          console.log(h);
+          // console.log(h);
           if (orderlist[h].add_time < new Date().getTime() - 7200000) {
             await this.model('order').where({id:orderlist[h].id}).update({
               is_del: 2
@@ -91,7 +91,111 @@ module.exports = class extends think.Controller {
             console.log("未达到开奖截止时间 ！");
           }
         }
+      //以下为每日凌晨两点半更新会员状态
+      //判断今日零点
+      console.log("开始判断是否为每日凌晨两点半 ...");
+      var date = new Date();
+      var Y = date.getFullYear() + '-';
+      var M = (date.getMonth()+1 < 10 ? '0'+(date.getMonth()+1) : date.getMonth()+1) + '-';
+      var D = (date.getDate() < 10 ? '0'+date.getDate() : date.getDate());
+      const past_time = Y+M+D+' 00:00:000'
+      const past_localtime = new Date(past_time).getTime()
+      let halfpasttwo = past_localtime + 9000000
+      let updateTime = [halfpasttwo - 280000,halfpasttwo + 280000]
+      // if (new Date().getTime() > updateTime[0] && new Date().getTime() < updateTime[1]) {
+        console.log('每日凌晨两点半更新（误差270秒，4分30秒，至少更新一次）');
+        const rules = await this.model('user_level_rules').select()
+        let rules_type = rules[0].type
+        // console.log(rules_type);
+        if (rules_type == 0) { //会员只开启金额充值
+            console.log('金额充值');
+            const all_user_list = await this.model('user').where({user_level_is_fockers: 0}).field(['id','user_recharge_monery']).select()
+            const level_list = await this.model('user_level').field(['recharge_monery','discount_scale']).order(['recharge_monery ASC']).select()
+            for (var i = 0; i < all_user_list.length; i++) {
+              let point_index = []
+              for (var j = 0; j < level_list.length; j++) {
+                if (all_user_list[i].user_recharge_monery > level_list[j].recharge_monery) {
+                  point_index.push(j)
+                }
+              }
+              if (point_index.length == 0) {
+                await this.model('user').where({id:all_user_list[i].id}).update({
+                  user_level: 0,
+                  user_discount: 1,
+                  user_level_name: '普通会员',
+                })
+              }else {
+                let index = point_index[point_index.length - 1]
+                await this.model('user').where({id:all_user_list[i].id}).update({
+                  user_level: index + 1,
+                  user_discount: level_list[index].discount_scale,
+                  user_level_name: level_list[index].name,
+                })
+              }
+            }
+          }else if (rules_type == 1) { //会员只开启累计消费
+            console.log('累计消费');
+            const all_user_list = await this.model('user').where({user_level_is_fockers: 0}).field(['id','user_all_price']).select()
+            const level_list = await this.model('user_level').field(['consumption_monery','discount_scale']).order(['consumption_monery ASC']).select()
+            for (var i = 0; i < all_user_list.length; i++) {
+              let point_index = []
+              for (var j = 0; j < level_list.length; j++) {
+                if (all_user_list[i].user_all_price > level_list[j].consumption_monery) {
+                  point_index.push(j)
+                }
+              }
+              if (point_index.length == 0) {
+                await this.model('user').where({id:all_user_list[i].id}).update({
+                  user_level: 0,
+                  user_discount: 1,
+                  user_level_name: '普通会员',
+                })
+              }else {
+                let index = point_index[point_index.length - 1]
+                await this.model('user').where({id:all_user_list[i].id}).update({
+                  user_level: index + 1,
+                  user_discount: level_list[index].discount_scale,
+                  user_level_name: level_list[index].name,
+                })
+              }
+            }
+          }else if (rules_type == 2) { //同时开启金额充值和累计消费
+            console.log('同时开启金额充值和累计消费,满足其一条件');
+            const all_user_list = await this.model('user').where({user_level_is_fockers: 0}).field(['id','user_recharge_monery','user_all_price']).select()
+            const level_list = await this.model('user_level').field(['consumption_monery','recharge_monery','discount_scale','name']).order(['recharge_monery ASC']).select()
+            for (var i = 0; i < all_user_list.length; i++) {
+              let point_index = []
+              for (var j = 0; j < level_list.length; j++) {
+                if ((all_user_list[i].user_recharge_monery > level_list[j].recharge_monery) || (all_user_list[i].user_all_price > level_list[j].consumption_monery)) {
+                  point_index.push(j)
+                }
+              }
+              if (point_index.length == 0) {
+                await this.model('user').where({id:all_user_list[i].id}).update({
+                  user_level: 0,
+                  user_discount: 1,
+                  user_level_name: '普通会员',
+                })
+              }else {
+                let index = point_index[point_index.length - 1]
+                await this.model('user').where({id:all_user_list[i].id}).update({
+                  user_level: index + 1,
+                  user_discount: level_list[index].discount_scale,
+                  user_level_name: level_list[index].name,
+                })
+              }
+            }
+          }
+      // }else {
+      //   console.log("不处于每日凌晨两点半 ...");
+      // }
       console.log('定时任务__5分钟一次');
     }
+    async TimingUpdateAction() {
+      console.log('************-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-**');
+    }
 
+  // async contactAction() {
+  //   console.log('contact');
+  // }
 }

@@ -2,11 +2,11 @@ const qiniu = require('qiniu')
 const sha1 = require('sha1')
 
 // 七牛提供的公钥
-const accessKey = ''
+const accessKey = think.config('qiniu.accessKey')
 // 七牛提供的私钥
-const secretKey = ''
+const secretKey = think.config('qiniu.secretKey')
 // 存储空间名
-const bucketName = ''
+const bucketName = think.config('qiniu.bucketName')
 module.exports.upload = (req, res) => {
   // 文件名
   const fileName = `${sha1(req.query.fileName)}.${req.query.fileName.split('.').pop()}`

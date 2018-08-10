@@ -53,6 +53,8 @@ module.exports = class extends Base {
     const categorySort_order = this.post('categorySort_order')
     const categoryIs_show = this.post('categoryIs_show')
     const GoodsMainImg = this.post('GoodsMainImg')
+    const banner_url = this.post('banner_url')
+
     const level = ''
     if (categoryParent_id == 0) {
       // console.log(99999999999999999999);
@@ -69,7 +71,7 @@ module.exports = class extends Base {
       parent_id:categoryParent_id,
       sort_order:categorySort_order,
       is_show:categoryIs_show,
-      banner_url:GoodsMainImg[0],
+      banner_url:banner_url,
       icon_url:GoodsMainImg[0],
       image_url:GoodsMainImg[0],
       wap_banner_url:GoodsMainImg[0],
@@ -90,6 +92,7 @@ module.exports = class extends Base {
       const categorySort_order = this.post('categorySort_order')
       const categoryIs_show = this.post('categoryIs_show')
       const GoodsMainImg = this.post('GoodsMainImg')
+      const banner_url = this.post('banner_url')
       const level = ''
       if (categoryParent_id == 0) {
         // console.log(99999999999999999999);
@@ -111,7 +114,7 @@ module.exports = class extends Base {
         parent_id:categoryParent_id,
         sort_order:categorySort_order,
         is_show:categoryIs_show,
-        banner_url:GoodsMainImg[0],
+        banner_url:banner_url,
         icon_url:GoodsMainImg[0],
         image_url:GoodsMainImg[0],
         wap_banner_url:GoodsMainImg[0],
@@ -219,7 +222,9 @@ module.exports = class extends Base {
   async destoryAction() {
     const id = this.post('id');
     await this.model('category').where({id: id}).limit(1).delete();
-    // TODO 删除图片
+    // await this.model('category').where({parent_id: id}).limit(1).delete();
+    await this.model('channel').where({parent_id: id}).limit(1).delete();
+
 
     return this.success();
   }

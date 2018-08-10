@@ -1,6 +1,64 @@
 const Base = require('./base.js');
 
 module.exports = class extends Base {
+  async getallcategoryAction() {
+    const id = this.post("id")
+    // console.log(id);
+    const page = this.post("page")
+    const size = this.post("size")
+
+    let category_info = await this.model('category').where({id: id}).find()
+    console.log(category_info);
+    if (category_info.parent_id == 0) {
+      const main_catelog = await this.model('category').field(['id', 'name', 'front_name', 'parent_id', 'sort_order']).limit(10)
+      .order(['sort_order ASC']).where({parent_id: 0,is_show: 1}).select();
+      for (var i = 0; i < main_catelog.length; i++) {
+        let second_catelog = []
+        second_catelog = await this.model('category').order(['sort_order ASC']).where({parent_id: main_catelog[i].id}).select()
+        let second_catelog_ids = []
+        for (var j = 0; j < second_catelog.length; j++) {
+          second_catelog_ids.push(second_catelog[j].id)
+        }
+        // main_catelog[i].second_catelog_ids = second_catelog_ids
+        let point_catelog_goods = await this.model('goods').where({category_id: {'in': second_catelog_ids},is_on_sale:1}).field(['id', 'name', 'list_pic_url', 'retail_price', 'have_pay_num'])
+        .order(['short_order DESC']).page(page, size).countSelect();
+        // console.log(point_catelog_goods);
+        main_catelog[i].point_catelog_goods = point_catelog_goods
+      }
+      return this.success(main_catelog)
+    }else {
+      const main_catelog = await this.model('category').field(['id', 'name', 'front_name', 'parent_id', 'sort_order']).limit(10)
+      .order(['sort_order ASC']).where({is_show: 1,parent_id: category_info.parent_id}).select();
+      console.log(main_catelog);
+      for (var i = 0; i < main_catelog.length; i++) {
+        let point_catelog_goods = await this.model('goods').where({category_id: main_catelog[i].id,is_on_sale:1}).field(['id', 'name', 'list_pic_url', 'retail_price', 'have_pay_num'])
+        .order(['short_order DESC']).page(page, size).countSelect();
+        main_catelog[i].point_catelog_goods = point_catelog_goods
+      }
+      return this.success(main_catelog)
+    }
+  }
+  // //下拉刷新获取数据
+  // async onreachbottomcategoryAction() {
+  //   const id = this.post("id")
+  //   const page = this.post("page")
+  //   const size = this.post("size")
+  //   console.log(id,page,size);
+  //   let category_info = await this.model('category').where({id: id}).find()
+  //   console.log(category_info);
+  // }
+  //分类tabbar 获取分类数据
+  async getallcatelogAction() {
+    const main_catelog = await this.model('category').limit(10).order(['sort_order ASC']).where({parent_id: 0,is_show:1}).select();
+    for (var i = 0; i < main_catelog.length; i++) {
+      let second_catelog = []
+      second_catelog = await this.model('category').order(['sort_order ASC']).where({parent_id: main_catelog[i].id}).select()
+      main_catelog[i].second_catelog = second_catelog
+    }
+    return this.success({
+      main_catelog:main_catelog
+    })
+  }
   /**
    * 获取分类栏目数据
    * @returns {Promise.<Promise|void|PreventPromise>}
@@ -9,8 +67,7 @@ module.exports = class extends Base {
     const categoryId = this.get('id');
 
     const model = this.model('category');
-    const dataa = await model.limit(10).where({parent_id: 0}).select();
-    const data = dataa.reverse()
+    const data = await model.limit(10).order(['sort_order ASC']).where({parent_id: 0}).select();
     let currentCategory = null;
     if (categoryId) {
       currentCategory = await model.where({'id': categoryId}).find();

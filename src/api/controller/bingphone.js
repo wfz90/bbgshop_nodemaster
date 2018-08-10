@@ -8,6 +8,9 @@ const SMSClient = require('@alicloud/sms-sdk')
 
 // ACCESS_KEY_ID/ACCESS_KEY_SECRET 根据实际申请的账号信息进行替换 think.config('vaptcha.vid')
 const accessKeyId = think.config('SMSClient.accessKeyId')
+const SignatureName = think.config('SMSClient.SignatureName')
+const TemplateDomesticCode = think.config('SMSClient.TemplateDomesticCode') //国内短信
+const TemplateAbroadCode = think.config('SMSClient.TemplateAbroadCode') ? think.config('SMSClient.TemplateAbroadCode') : '' //国际短信
 const secretAccessKey = think.config('SMSClient.secretAccessKey')
 
 //在云通信页面开通相应业务消息后，就能在页面上获得对应的queueName,不用填最后面一段
@@ -76,15 +79,10 @@ let smsClient = new SMSClient({accessKeyId, secretAccessKey})
 
 
 module.exports = class extends Base {
-  // async listAction() {
-  //   const couponList = await this.model('user_coupon_copy').select();
-  //   const couponPrice = 0.00; // 使用优惠券减免的金额
-  //   return this.success({
-  //     couponList:couponList,
-  //     couponPrice:couponPrice,
-  //     abc:"123"
-  //   })
-  // }
+  async getcountrycodeAction() {
+    const data = await this.model('country_code_ali').select()
+    return this.success(data)
+  }
   async findAction() {
     // const couponId = this.get("couponId")
     const result = await this.model('user').where({ id: think.userId}).find();
@@ -95,47 +93,86 @@ module.exports = class extends Base {
   }
   async textAction() {
     const Phone = this.post('Phone');
-    // let Abc = this.validateErrors
-    return this.success({
-      Phone:Phone,
-    }
-    );
+    const selectedcountry = this.post('selectedcountry')
+    if (parseInt(selectedcountry.phone_code) == 86) {
+      console.log('国内短信');
+        return this.success({
+          Phone:Phone,
+          type: 0,
+        })
+      }else {
+        console.log('国际短信');
+        return this.success({
+          Phone:Phone,
+          type: 1,
+        })
+      }
   }
-  //发送验证码
-  async sedsodeAction() {
+  //发送国际验证码
+  async sedAbroadsodeAction() {
     const Phone = this.post('phone');
+    const selectedcountry = this.post('selectedcountry')
+    console.log(selectedcountry);
+    let phone_add_code = '00' + selectedcountry.phone_code + Phone
+    console.log(phone_add_code);
+    var Num="7";
+      for(var i=0;i<5;i++)
+      { Num+=Math.floor(Math.random()*10); }
+      console.log(Num);
+      let message = await smsClient.sendSMS({
+          PhoneNumbers: phone_add_code,
+          SignName: SignatureName,
+          TemplateCode: TemplateAbroadCode,
+          TemplateParam: '{"code": '+Num+'}'
+        }).then(function (res) {
+            console.log(res);
+            if (res) {
+                let abc = '短信发送成功 ！'
+                return abc
+            }
+        }, function (err) {
+            console.log(err)
+            return err.data.Message
+        })
+        console.log(message);
+        return this.success({
+          Phone:Phone,
+          num:Num,
+          message: message,
+        });
 
+  }
+
+  //发送国内验证码
+  async sedDomesticsodeAction() {
+    const Phone = this.post('phone');
     var Num="7";
       for(var i=0;i<5;i++)
       {
       Num+=Math.floor(Math.random()*10);
       }
       console.log(Num);
-          //发送短信
-      let abc = await smsClient.sendSMS({
+      let message = await smsClient.sendSMS({
           PhoneNumbers: Phone,
-          SignName: '贝堡Shop',
-          TemplateCode: 'SMS_130795032',
-          TemplateParam: '{"code":'+Num+'}'
-      }).then(function (res) {
-          let {Code}=res
-          if (Code === 'OK') {
-              //处理返回参数
-              // console.log(res)
-          }
-      }, function (err) {
-          console.log(err)
-          console.log(err.data.Message)
-          return err.data.Message
-
-      })
-      const message = abc
-      return this.success({
-        Phone:Phone,
-        num:Num,
-        message: message,
-      });
-
+          SignName: SignatureName,
+          TemplateCode: TemplateDomesticCode,
+          TemplateParam: '{"code": '+Num+'}'
+        }).then(function (res) {
+            console.log(res);
+            if (res) {
+                let abc = '短信发送成功 ！'
+                return abc
+            }
+        }, function (err) {
+            console.log(err)
+            return err.data.Message
+        })
+        console.log(message);
+        return this.success({
+          Phone:Phone,
+          num:Num,
+          message: message,
+        });
 
   }
 
@@ -154,8 +191,16 @@ module.exports = class extends Base {
   async bingAction() {
     const bing = this.post("bingphone")
     const userid = this.post("userid")
+    const selectedcountry = this.post("selectedcountry")
     console.log(bing,userid);
-    const findresult = await this.model('user').where({ id: userid}).update({ mobile: bing});
+    console.log(selectedcountry);
+    const findresult = await this.model('user').where({ id: userid}).update({
+      mobile: bing,
+      mobile_country: selectedcountry.country_name_chinese,
+      mobile_country_code: selectedcountry.country_code,
+      mobile_code: selectedcountry.phone_code,
+      mobile_country_e: selectedcountry.country_name_english,
+    });
     // const result = await this.model('user').where({ id: think.userId }).update({ phone: bing});
     return this.success({
       Findresult:findresult,

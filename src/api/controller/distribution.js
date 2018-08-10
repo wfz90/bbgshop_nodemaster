@@ -1,11 +1,16 @@
 const Base = require('./base.js');
 
 module.exports = class extends Base {
+  async getdisrulesAction() {
+    const data = await this.model("distribution_rate").where({id:1}).find()
+    return this.success(data)
+  }
   async checkisdistributionhavefatherAction() {
+    const userId = this.post('userId')
     // const userdis = await this.model('distribution_user').where({user_id:think.userId}).select()
-    const maindis = await this.model('distribution_main').where({user_id:think.userId}).select()
+    const maindis = await this.model('distribution_main').where({user_id:userId}).select()
     console.log(maindis);
-    const userdis = await this.model('distribution_user').where({children_id:maindis[0].user_id}).select()
+    const userdis = maindis.length == 0 ? [] : await this.model('distribution_user').where({children_id:maindis[0].user_id}).select()
     console.log(userdis);
     console.log('9999999999999999999999999999999999999');
     if (maindis.length == 0 && userdis.length == 0) {
@@ -20,7 +25,8 @@ module.exports = class extends Base {
 
   }
   async findisdistributionAction() {
-    const applydata = await this.model('distribution_apply').where({user_id:think.userId}).select()
+    const orderId = this.post('orderId')
+    const applydata = await this.model('distribution_apply').where({user_id:orderId}).select()
     if (applydata.length !== 0) {
       if (applydata[0].status === 0) {
         return this.fail(17,applydata)
@@ -109,7 +115,8 @@ module.exports = class extends Base {
     const userdis = await this.model('distribution_user').where({children_id:nowuser.id}).select()
     const maindis = await this.model('distribution_main').where({user_id:userdis[0].farther_user_id}).select()
     const goodsdis = await this.model('distribution_goods').where({order_id:orderinfo.id}).select()
-    if (goodsdis.length >= 1) {
+    console.log(goodsdis);
+    if (goodsdis.length >= 2) {
       return this.fail(444,'当前订单已被记录分销 ！')
     }else {
       console.log("增加分销金额",maindis,userdis,goodsdis,orderinfo);
@@ -139,6 +146,8 @@ module.exports = class extends Base {
   async applydistributionAction() {
     const phone = this.post('phone')
     const userid = this.post('userid')
+    const selectedcountry = this.post('selectedcountry')
+    console.log(selectedcountry);
     const userinfo = await this.model('user').where({id:userid}).find()
     console.log(userinfo);
     const have = await this.model('distribution_apply').where({user_id:userinfo.id}).select()
@@ -148,6 +157,10 @@ module.exports = class extends Base {
         user_name: userinfo.nickname,
         user_id: userinfo.id,
         apply_time: new Date().getTime(),
+        mobile_country: selectedcountry.country_name_chinese,
+        mobile_country_code: selectedcountry.country_code,
+        mobile_code: selectedcountry.phone_code,
+        mobile_country_e: selectedcountry.country_name_english,
         status: 0,
       })
       return this.success(data)
@@ -157,12 +170,15 @@ module.exports = class extends Base {
         user_name: userinfo.nickname,
         user_id: userinfo.id,
         apply_time: new Date().getTime(),
+        mobile_country: selectedcountry.country_name_chinese,
+        mobile_country_code: selectedcountry.country_code,
+        mobile_code: selectedcountry.phone_code,
+        mobile_country_e: selectedcountry.country_name_english,
         status: 0,
       })
       return this.success(data)
     }
   }
-
   async setinvitermasterAction() {
     const nowuser = this.post('nowuser')
     const pasteruser = this.post('pasteruser')
@@ -189,6 +205,42 @@ module.exports = class extends Base {
     }
 
 
+  }
+  async setdistributionowndisAction() {
+    const userId = this.post('userId')
+    const sn = this.post('sn')
+    // const
+    console.log(userId);
+    const isDis = await this.model('distribution_apply').where({user_id:userId,status:1}).select()
+    if (isDis.length > 0) {
+      // 为分销员
+      const orderinfo = await this.model('order').where({order_sn:sn}).find()
+      const userdis = await this.model('user').where({id:userId}).find()
+      const goodsInfo = await this.model('order_goods').where({order_id:orderinfo.id}).select()
+      const maindis = await this.model('distribution_main').where({user_id:userId}).find()
+      const rate = await this.model('distribution_rate').select()
+      let rateasp = Number(rate[0].rate)
+      await this.model('distribution_goods').add({
+        order_id:orderinfo.id,
+        order_price:orderinfo.actual_price,
+        children_id: userdis.id,
+        children_name: userdis.nickname,
+        add_time:new Date().getTime(),
+        withdraw_cash: Number(0.00) + (Number(orderinfo.actual_price) * rateasp),
+        farther_user_id: userdis.id,
+        farther_user_name: userdis.nickname,
+      })
+      //设置分销员提成
+      await this.model('distribution_main').where({user_id:userId}).update({
+        children_have_deal_money:Number(maindis.children_have_deal_money) + Number(orderinfo.actual_price),
+        have_deal_order_num:Number(maindis.have_deal_order_num) + 1,
+        have_deal_order_id: maindis.have_deal_order_id + ',' + parseInt(orderinfo.id),
+        can_withdraw_cash: Number(maindis.can_withdraw_cash) + (Number(orderinfo.actual_price) * rateasp)
+      })
+      return this.fail(999,'设置分销员自身提成成功 ！')
+    }else {
+
+    }
   }
 
 

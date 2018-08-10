@@ -110,6 +110,10 @@ module.exports = class extends Base {
          order_status: status,
          confirLogic_time: new Date().getTime()
        });
+       const userInfo = await this.model('user').where({id:orderInfo.user_id}).find()
+       await this.model('user').where({id:orderInfo.user_id}).update({
+         user_all_price: Number(userInfo.user_all_price) + Number(orderInfo.actual_price)
+       })
      }
      const order = await this.model('order').where({ order_sn: orderId}).find()
      if (order.pay_id == 2) {
@@ -154,7 +158,7 @@ module.exports = class extends Base {
         openid: openid,
         body: '编号:' + orderInfo.order_sn,
         out_trade_no: orderInfo.order_sn,
-        total_fee: parseInt(orderInfo.actual_price * 100),
+        total_fee: Number(orderInfo.actual_price * 100),
         spbill_create_ip: '',
       });
       // console.log(returnParams);

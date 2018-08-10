@@ -1,6 +1,10 @@
 const Base = require('./base.js');
 
 module.exports = class extends Base {
+  async selectallcollagelistAction() {
+    const data = await this.model('collage').where({is_delete:0,is_abled:1}).select()
+    return this.success(data)
+  }
   async findgoodsAction() {
     const goodsid = this.post('goodsid')
     const skuid = this.post('skuid')

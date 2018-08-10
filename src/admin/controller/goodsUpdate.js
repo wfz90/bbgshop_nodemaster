@@ -1,6 +1,10 @@
 const Base = require('./base.js');
 
 module.exports = class extends Base {
+  async getsupplierAction() {
+    const data = await this.model('supplier').select()
+    return this.success(data)
+  }
   async getfrighttempletelistAction() {
     const data = await this.model('freight_template_main').select()
     return this.success(data)
@@ -9,6 +13,7 @@ module.exports = class extends Base {
     const id = this.post('id')
     const goodsInfo = await this.model('goods').where({id:id}).find()
     const loop_img = await this.model('goods_gallery').where({goods_id:id}).select()
+    const supplier_list = await this.model('supplier').select()
     goodsInfo.loop_img = loop_img
     console.log(goodsInfo.category_id);
     const secondClassify = await this.model('category').where({id:goodsInfo.category_id}).find()
@@ -16,7 +21,8 @@ module.exports = class extends Base {
     return this.success({
       goodsInfo:goodsInfo,
       secondClassify:secondClassify,
-      firstClassify:firstClassify
+      firstClassify:firstClassify,
+      supplier_list:supplier_list
     })
     // return this.display();
   }
@@ -55,7 +61,10 @@ module.exports = class extends Base {
           freight_type: info.freight_type,
           freight_template: info.freight_type == 1 ? info.freight_template : 0,
           cost_price: info.cost_price,
-          short_order: info.short_order
+          short_order: info.short_order,
+          supplier_id: info.supplier_id,//供货商id
+          supplier_name: info.supplier_name,//供货商名称
+          Identity: info.Identity ? 1 : 0,
       })
       for (var i = 0; i < info.loop_img.length; i++) {
         await this.model("goods_gallery").add({
@@ -87,7 +96,10 @@ module.exports = class extends Base {
           freight_type: info.freight_type,
           freight_template: info.freight_type == 1 ? info.freight_template : 0,
           cost_price: info.cost_price,
-          short_order: info.short_order
+          short_order: info.short_order,
+          supplier_id: info.supplier_id,//供货商id
+          supplier_name: info.supplier_name,//供货商名称
+          Identity: info.Identity ? 1 : 0, 
       })
       await this.model("goods_gallery").where({
           goods_id: info.id

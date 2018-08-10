@@ -10,7 +10,6 @@ module.exports = class extends Base {
     const index = this.post('index')
     let state = ''
     // let orderListno = []
-
     if(parseInt(index) == 0){state = 0} // 如果订单没有被取消，且没有支付，则可支付，可取消
     if(parseInt(index) == 1){state = 201} //如果订单已付款，没有发货，则可退款操作
     if(parseInt(index) == 2){state = 300}  // 如果订单已经发货，没有收货，则可收货操作和退款、退货操作
@@ -67,6 +66,10 @@ module.exports = class extends Base {
         // 订单状态的处理
         item.order_status_text = await this.model('order').getOrderStatusText(item.id);
         // 可操作的选项
+        // item.handleOption_TRUE = await this.model('order').GetOrderStatusAndHandel(item.id);
+        item.handleOption_TRUE = await this.model('order').GetOrderHandleOption_Rest(item.id);
+        item.OrderStatus_TRUE = await this.model('order').GetOrderStatusText_Rest(item.id);
+
         item.handleOption = await this.model('order').getOrderHandleOption(item.id);
         newOrderList.push(item);
       }
@@ -174,97 +177,52 @@ module.exports = class extends Base {
     // 留言
     const postscript = this.post('postscript');
     const freightPrice = this.post('freightPrice')
-    // const message = this.post('message');
+    const couponPrice = this.post('couponPrice')
+    const goodsTotalPrice = this.post('goodsTotalPrice')
+    const couponId = this.post('couponId')
+    const userId = this.post('userId')
+    const actualPrice = this.post('actualPrice');
+    const userDiscount_Price = this.post('userDiscount_Price')
+    const IdentityInput = this.post('IdentityInput')
+    // const supplier_ids = this.post('supplier_ids')
     const checkedAddress = await this.model('address').where({ id: addressId }).find();
     if (think.isEmpty(checkedAddress)) {
       return this.fail('请选择收货地址');
     }
+    console.log("*********************************************************");
+    console.log(IdentityInput);
 
     // 获取要购买的商品
-    const checkedGoodsList = await this.model('cart').where({ user_id: think.userId, session_id: 1, checked: 1 }).select();
+    const checkedGoodsList = await this.model('cart').where({ user_id: userId, session_id: 1, checked: 1 }).select();
     if (think.isEmpty(checkedGoodsList)) {
       return this.fail('请选择商品');
     }
-
-    // 统计商品总价
-    let goodsTotalPrice = 0.00;
-     // freight = 0.00;
-    // let freightPrice = 0.00;
-
-    for (const cartItem of checkedGoodsList) {
-      goodsTotalPrice += cartItem.number * cartItem.retail_price;
-      // freightPrice = Number(cartItem.freight) + Number(freightPrice)
-    }
-    console.log(goodsTotalPrice);
-    const couponId = this.post('couponId');
-    let cupprice = 0
-    let checkcup = ''
-    if (parseInt(couponId) == 0) {
-      // console.log("000000000000000000000000");
-      // const couponPrice = 0.00
-      cupprice = 0
-      checkcup = 0
-
-    }else {
-      // cupprice = 0
-      let checkcup = await this.model('coupon_user').where({user_id:think.userId,coupon_id:couponId}).find()
-      if (checkcup.coupon_type == 0) {
-        cupprice = (checkcup.coupon_value / 1).toFixed(2)
-      }else if (checkcup.coupon_type == 1){
-        cupprice = (goodsTotalPrice - (goodsTotalPrice * ( checkcup.coupon_value / 10 ))).toFixed(2)
-      }
-    }
-    const couponPrice = cupprice; // 使用优惠券减免的金额
-
     const orderTotalPrice = (Number(goodsTotalPrice) + Number(freightPrice) - Number(couponPrice)).toFixed(2); // 订单的总价
-    const actualPrice = (Number(orderTotalPrice) / 1).toFixed(2) ;
-    // let rlPrice = ''
-    // let checkcup = []
-    // let ordertolprice = ''
-    // let cupprice = ''
-    // let curtime = ''
-    // const couponPrice = (checkedcouponlist.value/100).toFixed(2);
-    // if (couponId == '0') {
-    //   console.log("没有选择优惠券直接下单");//
-    //   // 订单价格计算
-    //   cupprice = 0
-    //   ordertolprice = goodsTotalPrice + freightPrice ; // 订单的总价
-    //   rlPrice = ordertolprice - cupprice; // 减去其它支付的金额后，要实际支付的金额
-    //   curtime = parseInt(this.getTime());
-    //   // console.log(actualPrice);
-    //   // console.log(couponId);
-    // }else {
-    //   console.log("选择优惠券下单");
-    //   // 获取订单使用的优惠券
-    //   checkcup = await this.model('coupon_main').where({ coupon_id: couponId}).find();
-    //   if (think.isEmpty(checkcup)) {
-    //     checkcup = await this.model('coupon_user').where({ coupon_id: couponId}).find();
-    //   }
-    //   // console.log(checkedcouponlist);
-    //   cupprice = (checkcup.coupon_value/1).toFixed(2);
-    //   // 订单价格计算
-    //   ordertolprice = goodsTotalPrice + freightPrice ; // 订单的总价
-    //   rlPrice = ordertolprice - cupprice; // 减去其它支付的金额后，要实际支付的金额
-    //   curtime = parseInt(this.getTime());
-    // }
+    // const actualPrice = (Number(orderTotalPrice) / 1).toFixed(2) ;
+
     // const actualPrice = rlPrice
-    const checkedcouponlist = checkcup
-    // const orderTotalPrice = ordertolprice
-    // const couponPrice = cupprice
+    // console.log(parseInt(couponId));
+    if (parseInt(couponId) == 0) {
+      // let checkcup = []
+      console.log('没有选择优惠券');
+    }else {
+      console.log('选择了优惠券');
+      // let checkcup = await this.model('coupon_user').where({user_id: userId,coupon_id:couponId}).find()
+    }
+    const checkedcouponlist = parseInt(couponId) == 0 ? [] : await this.model('coupon_user').where({coupon_id:couponId}).find()
+    console.log(checkedcouponlist);
     const currentTime = new Date().getTime()
-    // console.log("999999999999999999999999999");
-    // console.log(rlPrice);
-    // console.log(couponId);
-    // console.log(actualPrice);
-    // console.log(checkedcouponlist);
-    // console.log(couponPrice);
-    // console.log(currentTime);
     for (var p = 0;p < GoodsList.length; p++){
       const product = await this.model('product').where({id:GoodsList[p].product_id}).find()
       await this.model('product').where({id:GoodsList[p].product_id}).update({
         goods_number:parseInt(product.goods_number) - 1
       })
     }
+    let couponUpdate = parseInt(couponId) == 0 ? '' : await this.model('coupon_user').where({coupon_id:couponId}).update({
+      used_type: 1,
+      used_time: new Date().getTime()
+    })
+    console.log(couponUpdate);
     const orderInfo = {
       order_sn: this.model('order').generateOrderNumber(),
       user_id: think.userId,
@@ -276,15 +234,16 @@ module.exports = class extends Base {
       district: checkedAddress.district_id,
       address: checkedAddress.address,
       freight_price: freightPrice,
-
+      Identity_Input: IdentityInput,
+      //供货商
+      // supplier_ids: supplier_ids,
       // 留言
       postscript: postscript,
-
       // 使用的优惠券
       coupon_id: couponId,
       checkedcoupon_list:checkedcouponlist,
       coupon_price: couponPrice,
-
+      user_level_discount: userDiscount_Price,
       add_time: currentTime,
       goods_price: goodsTotalPrice,
       order_price: orderTotalPrice,
@@ -312,7 +271,11 @@ module.exports = class extends Base {
         retail_price: goodsItem.retail_price,
         number: goodsItem.number,
         goods_specifition_name_value: goodsItem.goods_specifition_name_value,
-        goods_specifition_ids: goodsItem.goods_specifition_ids
+        goods_specifition_ids: goodsItem.goods_specifition_ids,
+        supplier_id: goodsItem.supplier_id ? goodsItem.supplier_id : '',
+        add_time: new Date().getTime(),
+        is_Identity: goodsItem.Identity,
+        Identity_Input: goodsItem.Identity == 1 ? IdentityInput : 0,
       });
     }
 

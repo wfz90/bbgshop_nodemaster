@@ -1,6 +1,84 @@
 const Base = require('./base.js');
 
 module.exports = class extends Base {
+  //设置用户等级固定与否
+  async setisfockersAction() {
+    const id = this.post('id')
+    const status = this.post('data')
+    console.log(id,status);
+    const data = await this.model('user').where({id:id}).update({
+      user_level_is_fockers:status
+    })
+    return this.success(data)
+
+  }
+  //设置用户的固定等级
+  async setPointLevelAction() {
+    const dis = this.post('dis')
+    const level = this.post('level')
+    const userid = this.post('userid')
+    // console.log(dis,userid);
+    const data = await this.model('user').where({id:userid}).update({
+      user_level_is_fockers: 1,
+      user_level: level + 1,
+      user_discount: dis
+    })
+    return this.success(data)
+  }
+  //设置等级类型
+  async setlevelrulesAction() {
+    const e = this.post('e')
+    const data = await this.model('user_level_rules').where({id:1}).update({
+      type: e
+    })
+    return this.success(data)
+  }
+  //添加等级信息
+  async adduserlevelAction() {
+    const info = this.post('info')
+    console.log(info);
+    if (info.id) {
+      const data = await this.model('user_level').where({id:info.id}).update({
+        name: info.name,
+        recharge_monery: info.recharge_monery,
+        consumption_monery: info.consumption_monery,
+        discount_scale: info.discount_scale,
+      })
+      return this.success(data)
+    }else {
+      const data = await this.model('user_level').add({
+        name: info.name,
+        recharge_monery: info.recharge_monery,
+        consumption_monery: info.consumption_monery,
+        discount_scale: info.discount_scale,
+      })
+      return this.success(data)
+    }
+  }
+  //删除等级信息
+  async dellevelinfoAction() {
+    const id = this.post('id')
+    const data = await this.model('user_level').where({id:id}).limit(1).delete()
+    return this.success(data)
+  }
+  //获取等级信息
+  async getuserlevelAction() {
+    const rules = await this.model('user_level_rules').select()
+    if (rules[0].type == 0) {
+      const data = await this.model('user_level').order(['recharge_monery ASC']).select()
+      return this.success({
+        data:data,
+        rules:rules
+      })
+    }else if (rules[0].type == 1 || rules[0].type == 2) {
+      const data = await this.model('user_level').order(['consumption_monery ASC']).select()
+      return this.success({
+        data:data,
+        rules:rules
+      })
+    }
+
+  }
   /**
    * index action
    * @return {Promise} []
@@ -12,8 +90,9 @@ module.exports = class extends Base {
 
     const model = this.model('user');
     const data = await model.where({username: ['like', `%${name}%`]}).order(['id DESC']).page(page, size).countSelect();
+    const rules = await this.model('user_level_rules').select()
 
-    return this.success(data);
+    return this.success(data,rules);
   }
 
   async infoAction() {

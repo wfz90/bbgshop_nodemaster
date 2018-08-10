@@ -93,7 +93,7 @@ module.exports = class extends Base {
     const model = this.model('category');
     const currentCategory = await model.where({id: this.get('id')}).find();
     const parentCategory = await model.where({id: currentCategory.parent_id}).find();
-    const brotherCategory = await model.where({parent_id: currentCategory.parent_id}).select();
+    const brotherCategory = await model.order(['sort_order ASC']).where({parent_id: currentCategory.parent_id}).select();
 
     return this.success({
       currentCategory: currentCategory,
@@ -128,9 +128,11 @@ module.exports = class extends Base {
     if (!think.isEmpty(isHot)) {
       whereMap.is_hot = isHot;
     }
-
-    if (!think.isEmpty(keyword)) {
-      whereMap.name = ['like', `%${keyword}%`];
+    console.log(keyword);
+    const params = keyword.replace(/\s/g,'%')
+    console.log(params);
+    if (!think.isEmpty(params)) {
+      whereMap.name = ['like', `%${params}%`];
       // 添加到搜索历史
       await this.model('search_history').add({
         keyword: keyword,
@@ -153,7 +155,7 @@ module.exports = class extends Base {
     } else {
       // 按商品添加时间
       orderMap = {
-        id: 'desc'
+        short_order: 'desc'
       };
     }
 

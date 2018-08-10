@@ -291,7 +291,7 @@ WeiXinPay
     }, function(err, response, body) {
       console.log(err);
       // console.log(response);
-      // console.log(body);
+      console.log(body);
       parseString(body, function(err, result) {
         fn(that.parseWXReturnXML(result));
       });
